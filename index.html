@@ -1,4 +1,4 @@
-html_content = """<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-HK">
 <head>
     <meta charset="UTF-8">
@@ -174,7 +174,7 @@ html_content = """<!DOCTYPE html>
 
         <div class="form-group">
             <label>材料清單 (直接貼上 WhatsApp 明細)</label>
-            <textarea id="materials" placeholder="在此直接貼上送貨明細...\n\n(橋B落料) 下路\n直杆2.0米 (有駁芯) =3碼\n..."></textarea>
+            <textarea id="materials" placeholder="在此直接貼上送貨明細...&#10;&#10;(橋B落料) 下路&#10;直杆2.0米 (有駁芯) =3碼&#10;..."></textarea>
         </div>
 
         <button class="btn" onclick="copyToWhatsApp()">一鍵複製內容</button>
@@ -306,9 +306,3 @@ html_content = """<!DOCTYPE html>
     </script>
 </body>
 </html>
-"""
-
-with open("index.html", "w", encoding="utf-8") as f:
-    f.write(html_content)
-
-print("HTML file generated successfully.")
