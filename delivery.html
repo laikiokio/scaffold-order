@@ -53,14 +53,20 @@
         
         /* 🌟 分隔線樣式 🌟 */
         .separator-row td {
-            border-top: 1.5px dashed #a0aec0 !important; /* 灰色虛線 */
-            height: 30px; /* 留出視覺空間 */
+            border-top: 1.5px dashed #a0aec0 !important; 
+            height: 25px; 
             padding: 0 !important;
         }
 
-        /* 固定送貨架表格樣式 */
-        .rack-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 25px; }
-        .rack-table td { padding: 6px 4px; text-align: center; border-bottom: 1px solid #ddd; }
+        /* 🌟 緊湊模式：針對打包架與基礎零件縮小字體與行距 🌟 */
+        .compact-row td { 
+            padding: 3px 4px !important; 
+            font-size: 11px !important; 
+        }
+
+        /* 固定送貨架表格樣式 (整體縮小) */
+        .rack-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 15px; }
+        .rack-table td { padding: 3px 4px; text-align: center; border-bottom: 1px solid #ddd; }
         .rack-table td.desc-col { text-align: left; }
         .rack-table tbody td { color: #00008B; font-weight: bold; }
         .rack-table .rack-bottom-border td { border-bottom: 2px solid black; }
@@ -93,6 +99,7 @@
                     <option value="">-- 手動輸入 --</option>
                     <option value="TC42-6">東涌42區-6座</option>
                     <option value="TC42-45">東涌42區[4-5座]</option>
+                    <option value="CREC-CWB36">清水灣道36號 (中鐵)</option>
                 </select>
             </div>
             <div class="form-group">
@@ -318,16 +325,34 @@
             "APS1000", "APS600L", "APS700L", "APS900L", "APS1200L", "APS200BC"
         ];
 
+        // 地盤數據庫
         const presets = {
             "TC42-6": {
-                client: "智發建築工程有限公司", address: "香港九龍塘窩打老道155號",
-                site: "東涌42區-6座", contact: "東涌42區-6座 余生 9792 7157",
-                contract: "QUOT-CF-TC42", dnPrefix: "CF-TC42(B6)-SR-DN"
+                client: "智發建築工程有限公司", 
+                address: "香港九龍塘窩打老道155號",
+                site: "東涌42區-6座", 
+                contact: "東涌42區-6座 余生 9792 7157",
+                contract: "QUOT-CF-TC42", 
+                plate: "LV538",
+                dnPrefix: "CF-TC42(B6)-SR-DN"
             },
             "TC42-45": {
-                client: "智發建築工程有限公司", address: "香港九龍塘窩打老道155號",
-                site: "東涌42區[4-5座]", contact: "東涌42區[4-5座] 子建 5403 6365",
-                contract: "QUOT-CF-TC42", dnPrefix: "CF-TC42(B45)-SR-DN"
+                client: "智發建築工程有限公司", 
+                address: "香港九龍塘窩打老道155號",
+                site: "東涌42區[4-5座]", 
+                contact: "東涌42區 子健 5403 6365",
+                contract: "QUOT-CF-TC42", 
+                plate: "WL9721",
+                dnPrefix: "CF-TC42(B4-B5)-SR-DN"
+            },
+            "CREC-CWB36": {
+                client: "中鐵一局集團有限公司", 
+                address: "FLAT/RM A3-A5 20/F, TML TOWER, 3 HOI SHING ROAD, TSUEN WAN, NT",
+                site: "36 Clear Water Bay Road, Ngau Chi Wan, KN", 
+                contact: "傑 9207 1404 / 陽 6354 6598",
+                contract: "CREC-QT01", 
+                plate: "LV538",
+                dnPrefix: "CREC-CWB36-DN"
             }
         };
 
@@ -341,6 +366,7 @@
                 document.getElementById('i-site').value = presets[val].site;
                 document.getElementById('i-contact').value = presets[val].contact;
                 document.getElementById('i-contract').value = presets[val].contract;
+                document.getElementById('i-plate').value = presets[val].plate;
                 
                 let dnBase = presets[val].dnPrefix;
                 const lastNum = localStorage.getItem('dn_num_' + val);
@@ -459,7 +485,7 @@
                 const info = db[code];
                 const weightTotal = qty * info.weight;
 
-                html += `<tr>
+                html += `<tr class="compact-row">
                     <td style="width: 5%;">${index++}</td>
                     <td style="width: 15%;">${code}</td>
                     <td style="width: 35%; text-align: left;" class="desc-col">${info.desc}</td>
@@ -483,7 +509,7 @@
                 const q = rackInputs[rack.code];
                 const qStr = q > 0 ? q : '';
                 // 為了排版美觀，只在最後一行加上底線
-                const trClass = (i === rackConfigs.length - 1) ? 'rack-bottom-border' : '';
+                const trClass = (i === rackConfigs.length - 1) ? 'rack-bottom-border compact-row' : 'compact-row';
                 
                 rackHtml += `<tr class="${trClass}">
                     <td style="width: 5%;"></td>
