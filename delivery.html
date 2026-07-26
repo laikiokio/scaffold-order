@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>晉昌鋼架 - 送貨單生成器</title>
-    <!-- 引入 html2pdf.js 函式庫，用於手機直接生成 PDF -->
+    <!-- 引入 html2pdf.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
@@ -30,33 +30,43 @@
         .btn-gen:hover { background: #128C7E; }
         .btn-print { background: #007bff; }
         .btn-print:hover { background: #0056b3; }
-        .btn-pdf { background: #8e44ad; } /* 新增的手機 PDF 按鈕顏色 */
+        .btn-pdf { background: #8e44ad; } 
         .btn-pdf:hover { background: #732d91; }
         
         /* ---------------------------------------------------
-           送貨單 A4 預覽與列印樣式 (One-Page 緊湊極致版) 
+           🌟 核心修復：強制 A4 尺寸預覽外框 🌟
+           這能確保手機螢幕再窄，送貨單排版也絕對不會擠壓變形
            --------------------------------------------------- */
+        .dn-preview-wrapper {
+            width: 100%;
+            overflow-x: auto; /* 手機上允許左右滑動查看 */
+            background: #d1d5db;
+            padding: 20px 0;
+            border-radius: 8px;
+        }
+
+        /* 送貨單 A4 實體樣式 */
         .dn-container { 
-            max-width: 210mm; 
-            min-height: 297mm; 
+            width: 210mm; /* 強制 A4 寬度 */
+            min-height: 297mm; /* 強制 A4 高度 */
             margin: 0 auto; 
             background: white; 
-            /* 縮減整體邊距以換取更多可用空間 */
             padding: 10mm 15mm; 
-            box-shadow: 0 0 10px rgba(0,0,0,0.2); 
+            box-shadow: 0 0 10px rgba(0,0,0,0.3); 
             box-sizing: border-box; 
             color: #000; 
+            -webkit-text-size-adjust: 100%; /* 防止 iOS Safari 雞婆放大字體 */
         }
         
         .header-logo { display: flex; justify-content: center; margin-bottom: 10px; width: 100%; }
-        .header-logo img { max-width: 90%; max-height: 70px; object-fit: contain; } /* 縮小 Logo 高度 */
+        .header-logo img { max-width: 90%; max-height: 70px; object-fit: contain; } 
         
-        .dn-title { text-align: center; margin: 5px 0 15px; } /* 縮減標題上下留白 */
+        .dn-title { text-align: center; margin: 5px 0 15px; } 
         .dn-title h2 { margin: 0; font-size: 20px; letter-spacing: 5px; font-weight: 900; }
         .dn-title span { font-size: 14px; font-weight: normal; letter-spacing: 1px; }
         
         .meta-table { width: 100%; font-size: 12px; margin-bottom: 10px; }
-        .meta-table td { padding: 2px 0; } /* 縮減表頭資訊行距 */
+        .meta-table td { padding: 2px 0; } 
         .meta-label { font-weight: 900; width: 15%; }
         .meta-val { color: #00008B; font-weight: bold; width: 35%; }
         .meta-label-right { font-weight: 900; width: 15%; text-align: right; padding-right: 10px; }
@@ -64,34 +74,31 @@
         
         /* 主材料表格 */
         .item-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 5px; }
-        .item-table th, .item-table td { padding: 4px 2px; text-align: center; } /* 縮小單元格內距 */
+        .item-table th, .item-table td { padding: 4px 2px; text-align: center; } 
         .item-table th { border-top: 2px solid black; border-bottom: 1px solid black; font-weight: 900; }
         .item-table tbody td { color: #00008B; font-weight: bold; }
         .item-table td.desc-col { text-align: left; }
         .item-table tfoot td { border-top: 1px solid black; border-bottom: 2px solid black; font-weight: 900; padding: 6px 0; }
         
-        /* 分隔線樣式 (更緊湊) */
+        /* 分隔線樣式 */
         .separator-row td {
             border-top: 1.5px dashed #a0aec0 !important; 
-            height: 15px; /* 縮小虛線留白空間 */
+            height: 15px; 
             padding: 0 !important;
         }
 
-        /* 緊湊模式：針對打包架與基礎零件縮小字體與行距 */
-        .compact-row td { 
-            padding: 2px 4px !important; 
-            font-size: 11px !important; 
-        }
+        /* 緊湊模式 */
+        .compact-row td { padding: 2px 4px !important; font-size: 11px !important; }
 
-        /* 固定送貨架表格樣式 (整體縮小) */
+        /* 固定送貨架表格樣式 */
         .rack-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
         .rack-table td { padding: 2px 4px; text-align: center; border-bottom: 1px solid #ddd; }
         .rack-table td.desc-col { text-align: left; }
         .rack-table tbody td { color: #00008B; font-weight: bold; }
         .rack-table .rack-bottom-border td { border-bottom: 2px solid black; }
 
-        /* 底部條款與簽名區 (大幅縮減空間) */
-        .footer-terms { font-size: 10px; margin-top: 5px; line-height: 1.3; } /* 縮小字體與行距 */
+        /* 底部條款與簽名區 */
+        .footer-terms { font-size: 10px; margin-top: 5px; line-height: 1.3; } 
         .footer-terms .blue-note { color: #00008B; text-align: center; font-weight: bold; margin-bottom: 15px; }
         .footer-terms .black-note { font-weight: 900; text-align: justify; }
         
@@ -99,11 +106,12 @@
         .sig-box { width: 45%; text-align: center; border-top: 1px solid black; padding-top: 5px; }
         .footer-address { margin-top: 15px; font-size: 10px; text-align: center; font-weight: 900; }
 
-        /* 電腦端網頁預設列印模式 (Ctrl+P) */
+        /* 電腦端列印模式 */
         @media print {
             .no-print { display: none !important; }
             body { background: white; margin: 0; padding: 0; }
-            .dn-container { box-shadow: none; max-width: 100%; padding: 5mm 10mm; }
+            .dn-preview-wrapper { background: none; padding: 0; overflow: visible; }
+            .dn-container { box-shadow: none; width: 100%; padding: 5mm 10mm; }
         }
     </style>
 </head>
@@ -131,10 +139,32 @@
             <div class="form-group"><label>客戶名稱 Client:</label><input type="text" id="i-client" value="智發建築工程有限公司"></div>
             <div class="form-group"><label>收貨單單號:</label><input type="text" id="i-dnno" value="CF-TC42(B6)-SR-DN35"></div>
         </div>
+        
         <div class="form-row">
             <div class="form-group"><label>地址 Address:</label><input type="text" id="i-address" value="香港九龍塘窩打老道155號"></div>
-            <div class="form-group"><label>運輸車牌:</label><input type="text" id="i-plate" value="LV538"></div>
+            <!-- 🌟 新增車牌選擇下拉選單 🌟 -->
+            <div class="form-group">
+                <label>運輸車牌:</label>
+                <select id="i-plate" onchange="handlePlateChange()">
+                    <optgroup label="APS 車隊">
+                        <option value="LV538">LV538 (斌哥)</option>
+                    </optgroup>
+                    <optgroup label="安記運輸">
+                        <option value="UX3633">UX3633 (倫)</option>
+                        <option value="街車 YM3989">街車 YM3989 (棟)</option>
+                        <option value="街車 WL9721">街車 WL9721 (光)</option>
+                        <option value="街車 TD1814">街車 TD1814 (志)</option>
+                        <option value="XW142">XW142 (偉)</option>
+                        <option value="ZX2448">ZX2448 (棟)</option>
+                        <option value="TL142">TL142 (俊)</option>
+                        <option value="VT6338">VT6338 (黎輝)</option>
+                    </optgroup>
+                    <option value="custom">-- 其他 (手動輸入) --</option>
+                </select>
+                <input type="text" id="customPlate" style="display:none; margin-top:8px;" placeholder="請輸入新車牌">
+            </div>
         </div>
+
         <div class="form-row">
             <div class="form-group"><label>送貨地盤地址:</label><input type="text" id="i-site" value="東涌42區-6座"></div>
             <div class="form-group"><label>合約編號:</label><input type="text" id="i-contract" value="QUOT-CF-TC42"></div>
@@ -146,117 +176,96 @@
         <div class="rack-input-section">
             <h4 class="rack-title">📦 輸入送貨架數量 (系統會自動將組件數量填入底部的固定表格)</h4>
             <div class="form-row">
-                <div class="form-group">
-                    <label>架A (APS1290RA)<br>直1000*4/橫1200*4/橫900*4</label>
-                    <input type="number" id="i-rack-a" min="0" placeholder="0">
-                </div>
-                <div class="form-group">
-                    <label>架B (APS9090RB)<br>直1000*4/橫900*8</label>
-                    <input type="number" id="i-rack-b" min="0" placeholder="0">
-                </div>
-                <div class="form-group">
-                    <label>架C (APS9060RC)<br>直1000*4/橫900*4/橫600*4</label>
-                    <input type="number" id="i-rack-c" min="0" placeholder="0">
-                </div>
-                <div class="form-group">
-                    <label>架D (APS9070RD)<br>直1000*4/橫900*4/橫700*4</label>
-                    <input type="number" id="i-rack-d" min="0" placeholder="0">
-                </div>
-                <div class="form-group">
-                    <label>架E (APS6060RE)<br>直1000*4/橫600*8</label>
-                    <input type="number" id="i-rack-e" min="0" placeholder="0">
-                </div>
+                <div class="form-group"><label>架A (APS1290RA)</label><input type="number" id="i-rack-a" min="0" placeholder="0"></div>
+                <div class="form-group"><label>架B (APS9090RB)</label><input type="number" id="i-rack-b" min="0" placeholder="0"></div>
+                <div class="form-group"><label>架C (APS9060RC)</label><input type="number" id="i-rack-c" min="0" placeholder="0"></div>
+                <div class="form-group"><label>架D (APS9070RD)</label><input type="number" id="i-rack-d" min="0" placeholder="0"></div>
+                <div class="form-group"><label>架E (APS6060RE)</label><input type="number" id="i-rack-e" min="0" placeholder="0"></div>
             </div>
         </div>
 
         <div class="form-group">
-            <label>📝 貼上 WhatsApp散裝材料清單 (此處解析出的材料會獨立顯示，不會與打包架數量合併):</label>
-            <textarea id="rawInput" rows="4" placeholder="例如：二环有心(APS1000S)：123支... (這裡不需要輸入打包架)"></textarea>
+            <label>📝 貼上 WhatsApp散裝材料清單 (此處解析出的材料會獨立顯示):</label>
+            <textarea id="rawInput" rows="4" placeholder="例如：二环有心(APS1000S)：123支..."></textarea>
         </div>
         
-        <!-- 更新後的按鈕群組 -->
         <div class="btn-group">
             <button class="btn btn-gen" onclick="generateDN()">⬇️ 生成送貨單預覽</button>
             <button class="btn btn-print" onclick="printDN()">🖨️ 電腦列印 (Ctrl+P)</button>
-            <button class="btn btn-pdf" onclick="downloadMobilePDF()">📱 手機一鍵儲存 PDF</button>
+            <button class="btn btn-pdf" onclick="downloadMobilePDF()">📱 手機一鍵儲存 PDF (完美單頁)</button>
         </div>
     </div>
 
-    <!-- 正式送貨單版面 -->
-    <div class="dn-container" id="printableArea">
-        <div class="header-logo">
-            <img src="logo.png" alt="晉昌鋼架工程有限公司">
-        </div>
-        
-        <div class="dn-title">
-            <h2>送貨單</h2>
-            <span>Delivery Note</span>
-        </div>
+    <!-- 預覽外框 (鎖定 A4 寬度) -->
+    <div class="dn-preview-wrapper no-print" id="previewWrapper">
+        <!-- 正式送貨單版面 -->
+        <div class="dn-container" id="printableArea">
+            <div class="header-logo"><img src="logo.png" alt="晉昌鋼架工程有限公司"></div>
+            <div class="dn-title">
+                <h2>送貨單</h2><span>Delivery Note</span>
+            </div>
 
-        <table class="meta-table">
-            <tr>
-                <td class="meta-label">客戶名稱 Client :</td><td class="meta-val" id="out-client">智發建築工程有限公司</td>
-                <td class="meta-label-right">收貨單單號 :</td><td class="meta-val-right" id="out-dnno">CF-TC42(B6)-SR-DN35</td>
-            </tr>
-            <tr>
-                <td class="meta-label">地址 Address :</td><td class="meta-val" id="out-address">香港九龍塘窩打老道155號</td>
-                <td class="meta-label-right">運輸車牌 :</td><td class="meta-val-right" id="out-plate">LV538</td>
-            </tr>
-            <tr>
-                <td class="meta-label">送貨地盤地址 :</td><td class="meta-val" id="out-site">東涌42區-6座</td>
-                <td class="meta-label-right">日期 Date :</td><td class="meta-val-right" id="out-date">2026-07-24</td>
-            </tr>
-            <tr>
-                <td class="meta-label">聯絡人 :</td><td class="meta-val" id="out-contact">東涌42區-6座 余生 9792 7157</td>
-                <td class="meta-label-right">合約編號 :</td><td class="meta-val-right" id="out-contract">QUOT-CF-TC42</td>
-            </tr>
-        </table>
-
-        <!-- 主材料表格 -->
-        <table class="item-table">
-            <thead>
+            <table class="meta-table">
                 <tr>
-                    <th style="width: 5%;">序</th>
-                    <th style="width: 15%;">APS 編號</th>
-                    <th style="width: 35%; text-align: left;">Description 规格描述</th>
-                    <th style="width: 10%;">件重</th>
-                    <th style="width: 10%;">數量 Quantity</th>
-                    <th style="width: 12%;">重量(KG)</th>
-                    <th style="width: 13%;">備注 Remark</th>
+                    <td class="meta-label">客戶名稱 Client :</td><td class="meta-val" id="out-client">智發建築工程有限公司</td>
+                    <td class="meta-label-right">收貨單單號 :</td><td class="meta-val-right" id="out-dnno">CF-TC42(B6)-SR-DN35</td>
                 </tr>
-            </thead>
-            <tbody id="out-items">
-                <!-- 自動生成 -->
-            </tbody>
-            <tfoot>
                 <tr>
-                    <td colspan="4" style="text-align: right; padding-right: 20px;">總數:</td>
-                    <td id="out-total-qty">0</td>
-                    <td id="out-total-weight">0.00</td>
-                    <td></td>
+                    <td class="meta-label">地址 Address :</td><td class="meta-val" id="out-address">香港九龍塘窩打老道155號</td>
+                    <td class="meta-label-right">運輸車牌 :</td><td class="meta-val-right" id="out-plate">LV538</td>
                 </tr>
-            </tfoot>
-        </table>
+                <tr>
+                    <td class="meta-label">送貨地盤地址 :</td><td class="meta-val" id="out-site">東涌42區-6座</td>
+                    <td class="meta-label-right">日期 Date :</td><td class="meta-val-right" id="out-date">2026-07-24</td>
+                </tr>
+                <tr>
+                    <td class="meta-label">聯絡人 :</td><td class="meta-val" id="out-contact">東涌42區-6座 余生 9792 7157</td>
+                    <td class="meta-label-right">合約編號 :</td><td class="meta-val-right" id="out-contract">QUOT-CF-TC42</td>
+                </tr>
+            </table>
 
-        <!-- 固定的 5 種送貨架 (打包架 A ~ E) 表格 -->
-        <table class="rack-table">
-            <tbody id="out-racks">
-                <!-- 自動填入 A~E 數量 -->
-            </tbody>
-        </table>
+            <!-- 主材料表格 -->
+            <table class="item-table">
+                <thead>
+                    <tr>
+                        <th style="width: 5%;">序</th>
+                        <th style="width: 15%;">APS 編號</th>
+                        <th style="width: 35%; text-align: left;">Description 规格描述</th>
+                        <th style="width: 10%;">件重</th>
+                        <th style="width: 10%;">數量 Quantity</th>
+                        <th style="width: 12%;">重量(KG)</th>
+                        <th style="width: 13%;">備注 Remark</th>
+                    </tr>
+                </thead>
+                <tbody id="out-items"></tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4" style="text-align: right; padding-right: 20px;">總數:</td>
+                        <td id="out-total-qty">0</td>
+                        <td id="out-total-weight">0.00</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
 
-        <div class="footer-terms">
-            <div class="blue-note">*以上為送貨架組成的單件，其中送貨架租金和其費用將會以單件計算</div>
-            <div class="black-note">茲證明上列鋼架及配件品質, 數量均已清楚檢驗合格及簽收確認, 如回收貨品出現損毀/割斷/遺失, 而未能於地盤即時點算發現, 出租方有權自行點算後作出“實報實銷”</div>
-        </div>
+            <!-- 送貨架表格 -->
+            <table class="rack-table">
+                <tbody id="out-racks"></tbody>
+            </table>
 
-        <div class="signatures">
-            <div class="sig-box">簽收 Accepted and Confirmed by</div>
-            <div class="sig-box">Advance Prosperity Scaffold Engineering Limited</div>
-        </div>
-        
-        <div class="footer-address">
-            地址: 新界葵芳興芳路223號新都會廣場二座23樓05室 郵件查詢 : apseltdd@gmail.com 電話: 蘇先生 (Kenneth So) 66885076
+            <div class="footer-terms">
+                <div class="blue-note">*以上為送貨架組成的單件，其中送貨架租金和其費用將會以單件計算</div>
+                <div class="black-note">茲證明上列鋼架及配件品質, 數量均已清楚檢驗合格及簽收確認, 如回收貨品出現損毀/割斷/遺失, 而未能於地盤即時點算發現, 出租方有權自行點算後作出“實報實銷”</div>
+            </div>
+
+            <div class="signatures">
+                <div class="sig-box">簽收 Accepted and Confirmed by</div>
+                <div class="sig-box">Advance Prosperity Scaffold Engineering Limited</div>
+            </div>
+            
+            <div class="footer-address">
+                地址: 新界葵芳興芳路223號新都會廣場二座23樓05室 郵件查詢 : apseltdd@gmail.com 電話: 蘇先生 (Kenneth So) 66885076
+            </div>
         </div>
     </div>
 
@@ -352,7 +361,7 @@
             "TC42-45": {
                 client: "智發建築工程有限公司", address: "香港九龍塘窩打老道155號",
                 site: "東涌42區[4-5座]", contact: "東涌42區 子健 5403 6365",
-                contract: "QUOT-CF-TC42", plate: "WL9721", dnPrefix: "CF-TC42(B4-B5)-SR-DN"
+                contract: "QUOT-CF-TC42", plate: "街車 WL9721", dnPrefix: "CF-TC42(B4-B5)-SR-DN"
             },
             "CREC-CWB36": {
                 client: "中鐵一局集團有限公司", address: "FLAT/RM A3-A5 20/F, TML TOWER, 3 HOI SHING ROAD, TSUEN WAN, NT",
@@ -363,6 +372,16 @@
 
         document.getElementById('i-date').valueAsDate = new Date();
 
+        // 監聽車牌選單
+        function handlePlateChange() {
+            const selected = document.getElementById('i-plate').value;
+            if (selected === 'custom') {
+                document.getElementById('customPlate').style.display = 'block';
+            } else {
+                document.getElementById('customPlate').style.display = 'none';
+            }
+        }
+
         function applyPreset() {
             const val = document.getElementById('sitePreset').value;
             if(val && presets[val]) {
@@ -372,6 +391,7 @@
                 document.getElementById('i-contact').value = presets[val].contact;
                 document.getElementById('i-contract').value = presets[val].contract;
                 document.getElementById('i-plate').value = presets[val].plate;
+                handlePlateChange(); // 確保自定義框隱藏或顯示正確
                 
                 let dnBase = presets[val].dnPrefix;
                 const lastNum = localStorage.getItem('dn_num_' + val);
@@ -383,7 +403,6 @@
             }
         }
 
-        // 保存單號邏輯
         function saveDNState() {
             const val = document.getElementById('sitePreset').value;
             if(val) {
@@ -396,14 +415,19 @@
         }
 
         function generateDN() {
+            // 同步表頭
             document.getElementById('out-client').innerText = document.getElementById('i-client').value;
             document.getElementById('out-address').innerText = document.getElementById('i-address').value;
             document.getElementById('out-site').innerText = document.getElementById('i-site').value;
             document.getElementById('out-contact').innerText = document.getElementById('i-contact').value;
             document.getElementById('out-contract').innerText = document.getElementById('i-contract').value;
             document.getElementById('out-dnno').innerText = document.getElementById('i-dnno').value;
-            document.getElementById('out-plate').innerText = document.getElementById('i-plate').value;
             document.getElementById('out-date').innerText = document.getElementById('i-date').value;
+            
+            // 處理車牌值
+            let plateVal = document.getElementById('i-plate').value;
+            if (plateVal === 'custom') plateVal = document.getElementById('customPlate').value;
+            document.getElementById('out-plate').innerText = plateVal;
 
             const itemMap = {}; 
             const baseCounts = { "APS1000": 0, "APS600L": 0, "APS700L": 0, "APS900L": 0, "APS1200L": 0, "APS200BC": 0 };
@@ -520,34 +544,39 @@
             document.getElementById('out-racks').innerHTML = rackHtml;
         }
 
-        // 🖨️ 原本的電腦端列印
+        // 🖨️ 電腦端列印
         function printDN() {
             generateDN();
             saveDNState();
             window.print();
         }
 
-        // 📱 新增的手機端生成 PDF 功能
+        // 📱 完美解決手機端 PDF 截斷與排版走位
         function downloadMobilePDF() {
-            // 先確保數據已生成並儲存單號
             generateDN();
             saveDNState();
 
-            // 抓取目標區域和檔案名稱
+            // 在生成 PDF 時，暫時移除外框的左右滑動限制，讓 html2pdf 能完美抓取整張 210mm 的 A4
+            const wrapper = document.getElementById('previewWrapper');
             const element = document.getElementById('printableArea');
+            wrapper.style.overflowX = 'visible'; 
+            
             const dnNo = document.getElementById('i-dnno').value || 'Delivery_Note';
 
-            // 設定 PDF 生成參數 (強制適配 A4 大小)
             const opt = {
-                margin:       [10, 5, 10, 5], // 上, 右, 下, 左 的邊距 (mm)
+                margin:       0, // 設定為 0 確保完全貼合邊緣，由 CSS 的 Padding 控制內距
                 filename:     `${dnNo}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true }, // scale:2 提高清晰度, useCORS 確保 Logo 能載入
+                image:        { type: 'jpeg', quality: 1 },
+                // windowWidth 參數是讓手機不會因為螢幕太窄而把字擠到下一行的魔法設定
+                html2canvas:  { scale: 2, useCORS: true, windowWidth: 800 }, 
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            // 執行下載
-            html2pdf().set(opt).from(element).save();
+            html2pdf().set(opt).from(element).save().then(() => {
+                // 存檔後將滑動功能加回來
+                wrapper.style.overflowX = 'auto'; 
+                alert('✅ PDF 已成功生成！請查看您的下載資料夾。');
+            });
         }
     </script>
 </body>
