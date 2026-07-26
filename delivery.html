@@ -51,6 +51,13 @@
         .item-table td.desc-col { text-align: left; }
         .item-table tfoot td { border-top: 1px solid black; border-bottom: 2px solid black; font-weight: 900; }
         
+        /* 🌟 分隔線樣式 🌟 */
+        .separator-row td {
+            border-top: 1.5px dashed #a0aec0 !important; /* 灰色虛線 */
+            height: 30px; /* 留出視覺空間 */
+            padding: 0 !important;
+        }
+
         /* 固定送貨架表格樣式 */
         .rack-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 25px; }
         .rack-table td { padding: 6px 4px; text-align: center; border-bottom: 1px solid #ddd; }
@@ -190,7 +197,7 @@
                 </tr>
             </thead>
             <tbody id="out-items">
-                <!-- 自動生成 (散裝材料 + 固定的6大組件) -->
+                <!-- 自動生成 (散裝材料 + 分隔線 + 固定的6大組件) -->
             </tbody>
             <tfoot>
                 <tr>
@@ -383,10 +390,12 @@
                 }
             }
 
-            // 2. 解析 WhatsApp 文字清單 (所有的材料，包括可能重複的基礎組件，都當作散裝材料另外顯示)
+            // 2. 解析 WhatsApp 文字清單 (所有的材料都當作散裝材料另外顯示)
             const raw = document.getElementById('rawInput').value;
             const segments = raw.split(/;|；|。|\n/);
             
+            let hasScatteredItems = false; // 記錄是否有散裝材料，決定要不要印虛線
+
             segments.forEach(seg => {
                 const upperSeg = seg.toUpperCase();
                 const codeMatch = upperSeg.match(/(APS[A-Z0-9\-]+)/i);
@@ -406,6 +415,7 @@
                         // 排除打包架本身的代碼，其餘全部當作獨立散裝項目加入 itemMap
                         if (!Object.keys(rackCompositions).includes(code)) {
                             itemMap[code] = (itemMap[code] || 0) + qty;
+                            hasScatteredItems = true;
                         }
                     }
                 }
@@ -434,6 +444,13 @@
                 </tr>`;
                 totalQty += qty;
                 totalWeight += weightTotal;
+            }
+
+            // 🌟 如果上面有散裝材料，加入美觀的分隔線 🌟
+            if (hasScatteredItems) {
+                html += `<tr class="separator-row">
+                    <td colspan="7"></td>
+                </tr>`;
             }
 
             // 最後固定渲染由打包架拆解出來的 6 大基礎零件
