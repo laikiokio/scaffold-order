@@ -6,7 +6,7 @@
     <title>腳手架 Order 編輯器</title>
     <style>
         :root {
-            --primary: #25D366; /* WhatsApp Green */
+            --primary: #25D366; 
             --primary-dark: #128C7E;
             --bg: #f4f6f8;
             --card-bg: #ffffff;
@@ -36,87 +36,40 @@
             border-bottom: 2px solid #f0f0f0;
             padding-bottom: 10px;
         }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-row {
-            display: flex;
-            gap: 10px;
-        }
-        .form-row .form-group {
-            flex: 1;
-            margin-bottom: 0;
-        }
+        .form-group { margin-bottom: 15px; }
+        .form-row { display: flex; gap: 10px; }
+        .form-row .form-group { flex: 1; margin-bottom: 0; }
         label {
-            display: block;
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 6px;
-            color: #4b5563;
+            display: block; font-size: 14px; font-weight: 600;
+            margin-bottom: 6px; color: #4b5563;
         }
         input[type="text"], input[type="number"], input[type="date"], select, textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-size: 16px; /* 阻止 iOS 自動放大 */
-            background-color: #fafafa;
-            transition: border-color 0.2s;
+            width: 100%; padding: 10px; border: 1px solid var(--border);
+            border-radius: 8px; box-sizing: border-box; font-size: 16px; 
+            background-color: #fafafa; transition: border-color 0.2s;
         }
         input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-            background-color: #fff;
+            outline: none; border-color: var(--primary); background-color: #fff;
         }
-        textarea {
-            resize: vertical;
-            min-height: 140px;
-            line-height: 1.5;
-        }
+        textarea { resize: vertical; min-height: 140px; line-height: 1.5; }
         .btn {
-            width: 100%;
-            padding: 14px;
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
+            width: 100%; padding: 14px; background-color: var(--primary);
+            color: white; border: none; border-radius: 8px; font-size: 16px;
+            font-weight: bold; cursor: pointer; margin-top: 10px;
             box-shadow: 0 2px 4px rgba(37, 211, 102, 0.3);
         }
-        .btn:active {
-            background-color: var(--primary-dark);
-            transform: scale(0.98);
-        }
+        .btn:active { background-color: var(--primary-dark); transform: scale(0.98); }
         .preview-section {
-            margin-top: 20px;
-            background: #e5ddd5; /* 仿 WhatsApp 聊天背景 */
-            padding: 15px;
-            border-radius: 8px;
-            position: relative;
+            margin-top: 20px; background: #e5ddd5; padding: 15px;
+            border-radius: 8px; position: relative;
         }
         .preview-bubble {
-            background: white;
-            padding: 12px 16px;
-            border-radius: 8px;
-            border-top-left-radius: 0;
-            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
-            white-space: pre-wrap;
-            font-family: inherit;
-            font-size: 15px;
-            line-height: 1.5;
-            color: #111b21;
-            user-select: all;
+            background: white; padding: 12px 16px; border-radius: 8px;
+            border-top-left-radius: 0; box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+            white-space: pre-wrap; font-family: inherit; font-size: 15px;
+            line-height: 1.5; color: #111b21; user-select: all;
         }
-        .notice {
-            font-size: 12px;
-            color: #6b7280;
-            text-align: center;
-            margin-top: 10px;
-        }
+        .notice { font-size: 12px; color: #6b7280; text-align: center; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -145,7 +98,9 @@
             <select id="siteSelect">
                 <option value="中鐵-清水灣(租賃)">中鐵-清水灣(租賃)</option>
                 <option value="智發-東涌42區[4-5座] (租賃)">智發-東涌42區[4-5座] (租賃)</option>
-                <option value="智發-東涌42區[6座] (租賃)">智發-東涌42區[6座] (租賃)</option>
+                <option value="智發-東涌42[6座] (租賃)">智發-東涌42[6座] (租賃)</option>
+                <option value="景澤-東涌(租賃)">景澤-東涌(租賃)</option>
+                <option value="恆德-藍田(租賃)">恆德-藍田(租賃)</option>
                 <option value="custom">-- 其他地盤 (手動輸入) --</option>
             </select>
             <input type="text" id="customSite" style="display:none; margin-top:8px;" placeholder="請輸入新地盤名稱">
@@ -157,13 +112,29 @@
         </div>
 
         <div class="form-row form-group">
-            <div class="form-group" style="flex: 0.6;">
+            <div class="form-group" style="flex: 0.4;">
                 <label>第幾車</label>
                 <input type="number" id="carNum" value="1" min="1">
             </div>
-            <div class="form-group">
-                <label>車牌</label>
-                <input type="text" id="plate" placeholder="例: LV538">
+            <div class="form-group" style="flex: 0.6;">
+                <label>車牌 (自動綁定司機)</label>
+                <select id="plateSelect">
+                    <optgroup label="APS 車隊">
+                        <option value="LV538">LV538 (斌哥)</option>
+                    </optgroup>
+                    <optgroup label="安記運輸">
+                        <option value="UX3633">UX3633 (倫)</option>
+                        <option value="街車 YM3989">街車 YM3989 (棟)</option>
+                        <option value="街車 WL9721">街車 WL9721 (光)</option>
+                        <option value="街車 TD1814">街車 TD1814 (志)</option>
+                        <option value="XW142">XW142 (偉)</option>
+                        <option value="ZX2448">ZX2448 (棟)</option>
+                        <option value="TL142">TL142 (俊)</option>
+                        <option value="VT6338">VT6338 (黎輝)</option>
+                    </optgroup>
+                    <option value="custom">-- 其他車牌 (手動輸入) --</option>
+                </select>
+                <input type="text" id="customPlate" style="display:none; margin-top:8px;" placeholder="請輸入新車牌">
             </div>
         </div>
 
@@ -187,14 +158,30 @@
     </div>
 
     <script>
-        // 地盤與聯絡人資料庫 (根據截圖預設)
+        // 📋 地盤與聯絡人資料庫
         const siteDatabase = {
             "中鐵-清水灣(租賃)": "傑 9207 1404 / 陽 6354 6598",
             "智發-東涌42區[4-5座] (租賃)": "子建 5403 6365",
-            "智發-東涌42區[6座] (租賃)": "子建 5403 6365"
+            "智發-東涌42[6座] (租賃)": "余建清 9792 7157",
+            "景澤-東涌(租賃)": "景澤-阿進 9229 8114",
+            "恆德-藍田(租賃)": "斌 5493 9627",
+            "熙信 - 謝斐道(租賃)": "鄭生 6449 9116"
         };
 
-        // DOM 元素
+        // 🚚 車牌與司機資料庫
+        const driverDatabase = {
+            "LV538": "*斌哥 5636 6199*",
+            "街車 UX3633": "*倫60996434*",
+            "街車 YM3989": "*棟 9628 0816*",
+            "街車 WL9721": "*光 94873324*",
+            "街車 TD1814": "志 9860 5480",
+            "街車 XW142": "*偉 67977984*",
+            "街車 ZX2448": "*棟 9628 0816*",
+            "街車 TL142": "*俊 61210710*",
+            "街車 VT6338": "黎輝 9838 9093"
+        };
+
+        // DOM 元素綁定
         const els = {
             date: document.getElementById('dateInput'),
             time: document.getElementById('timeSlot'),
@@ -202,7 +189,8 @@
             customSite: document.getElementById('customSite'),
             contact: document.getElementById('contactInfo'),
             carNum: document.getElementById('carNum'),
-            plate: document.getElementById('plate'),
+            plate: document.getElementById('plateSelect'),
+            customPlate: document.getElementById('customPlate'),
             driver: document.getElementById('driver'),
             materials: document.getElementById('materials'),
             preview: document.getElementById('previewBox')
@@ -211,7 +199,7 @@
         // 初始化日期為今天
         els.date.valueAsDate = new Date();
 
-        // 格式化日期函數 (生成如: 23/07/2026[星期四])
+        // 格式化日期函數 (生成如: 27/07/2026[星期一])
         function formatDate(dateStr) {
             if (!dateStr) return "";
             const d = new Date(dateStr);
@@ -222,7 +210,7 @@
             return `${dd}/${mm}/${yyyy}[${days[d.getDay()]}]`;
         }
 
-        // 更新地盤聯絡人邏輯
+        // 🔄 更新地盤聯絡人
         function handleSiteChange() {
             const selected = els.site.value;
             if (selected === 'custom') {
@@ -235,15 +223,29 @@
             updatePreview();
         }
 
-        // 生成最終排版文字
+        // 🔄 更新車牌與司機
+        function handlePlateChange() {
+            const selected = els.plate.value;
+            if (selected === 'custom') {
+                els.customPlate.style.display = 'block';
+                els.driver.value = '';
+            } else {
+                els.customPlate.style.display = 'none';
+                els.driver.value = driverDatabase[selected] || '';
+            }
+            updatePreview();
+        }
+
+        // 📝 生成最終排版文字
         function generateMessage() {
             const dateText = formatDate(els.date.value);
             const timeText = els.time.value;
             const siteText = els.site.value === 'custom' ? els.customSite.value : els.site.value;
+            const plateText = els.plate.value === 'custom' ? els.customPlate.value : els.plate.value;
             
             let msg = `日期： ${dateText} ${timeText}\n`;
             msg += `地點： ${siteText} 第${els.carNum.value}車\n`;
-            msg += `車牌： ${els.plate.value}\n`;
+            msg += `車牌： ${plateText}\n`;
             msg += `司機： ${els.driver.value}\n`;
             msg += `地盤聯絡人： ${els.contact.value}\n`;
             msg += `車型： 30噸吊雞車\n`;
@@ -257,12 +259,12 @@
             return msg;
         }
 
-        // 更新預覽區
+        // 👁️ 更新預覽區
         function updatePreview() {
             els.preview.innerText = generateMessage();
         }
 
-        // 綁定事件監聽，實現實時預覽
+        // 綁定所有事件監聽，實現實時預覽
         Object.values(els).forEach(el => {
             if(el && el.tagName) {
                 el.addEventListener('input', updatePreview);
@@ -270,10 +272,11 @@
             }
         });
 
-        // 獨立綁定地盤選擇事件
+        // 獨立綁定地盤和車牌選擇事件
         els.site.addEventListener('change', handleSiteChange);
+        els.plate.addEventListener('change', handlePlateChange);
 
-        // 一鍵複製功能
+        // 📋 一鍵複製功能
         function copyToWhatsApp() {
             const text = generateMessage();
             if (navigator.clipboard && window.isSecureContext) {
@@ -301,8 +304,9 @@
             document.body.removeChild(ta);
         }
 
-        // 初始執行一次以顯示預設畫面
+        // 初始執行一次以載入預設畫面
         handleSiteChange();
+        handlePlateChange();
     </script>
 </body>
 </html>
