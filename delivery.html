@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>晉昌鋼架 - 送貨單生成器</title>
+    <!-- 引入 html2pdf.js 函式庫，用於手機直接生成 PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
     <style>
         /* 網頁版控制面板樣式 */
         body { font-family: "Microsoft JhengHei", Arial, sans-serif; background: #e9ecef; margin: 0; padding: 20px; }
@@ -14,76 +17,93 @@
         label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #555; }
         input[type="text"], input[type="date"], select, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
         
-        /* 打包架輸入區專屬樣式 */
+        /* 打包架輸入區 */
         .rack-input-section { background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #d1d5db; }
         .rack-input-section .rack-title { color: #d97706; font-size: 15px; margin-bottom: 10px; border-bottom: none; padding-bottom: 0; }
         .rack-input-section .form-group label { font-size: 11px; color: #4b5563; }
         .rack-input-section input[type="number"] { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; text-align: center; font-weight: bold; font-size: 16px; color: #00008B; }
 
-        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
-        .btn { flex: 1; padding: 12px; font-size: 16px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; color: white; transition: 0.2s; }
+        /* 按鈕群組 */
+        .btn-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
+        .btn { flex: 1; min-width: 200px; padding: 12px; font-size: 15px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; color: white; transition: 0.2s; }
         .btn-gen { background: #25D366; }
         .btn-gen:hover { background: #128C7E; }
         .btn-print { background: #007bff; }
         .btn-print:hover { background: #0056b3; }
+        .btn-pdf { background: #8e44ad; } /* 新增的手機 PDF 按鈕顏色 */
+        .btn-pdf:hover { background: #732d91; }
         
-        /* 送貨單 A4 預覽與列印樣式 */
-        .dn-container { max-width: 210mm; min-height: 297mm; margin: 0 auto; background: white; padding: 15mm 20mm; box-shadow: 0 0 10px rgba(0,0,0,0.2); box-sizing: border-box; color: #000; }
+        /* ---------------------------------------------------
+           送貨單 A4 預覽與列印樣式 (One-Page 緊湊極致版) 
+           --------------------------------------------------- */
+        .dn-container { 
+            max-width: 210mm; 
+            min-height: 297mm; 
+            margin: 0 auto; 
+            background: white; 
+            /* 縮減整體邊距以換取更多可用空間 */
+            padding: 10mm 15mm; 
+            box-shadow: 0 0 10px rgba(0,0,0,0.2); 
+            box-sizing: border-box; 
+            color: #000; 
+        }
         
-        .header-logo { display: flex; justify-content: center; margin-bottom: 15px; width: 100%; }
-        .header-logo img { max-width: 90%; max-height: 85px; object-fit: contain; }
+        .header-logo { display: flex; justify-content: center; margin-bottom: 10px; width: 100%; }
+        .header-logo img { max-width: 90%; max-height: 70px; object-fit: contain; } /* 縮小 Logo 高度 */
         
-        .dn-title { text-align: center; margin: 10px 0 25px; }
-        .dn-title h2 { margin: 0; font-size: 22px; letter-spacing: 5px; font-weight: 900; }
-        .dn-title span { font-size: 16px; font-weight: normal; letter-spacing: 1px; }
+        .dn-title { text-align: center; margin: 5px 0 15px; } /* 縮減標題上下留白 */
+        .dn-title h2 { margin: 0; font-size: 20px; letter-spacing: 5px; font-weight: 900; }
+        .dn-title span { font-size: 14px; font-weight: normal; letter-spacing: 1px; }
         
-        .meta-table { width: 100%; font-size: 12px; margin-bottom: 15px; }
-        .meta-table td { padding: 4px 0; }
+        .meta-table { width: 100%; font-size: 12px; margin-bottom: 10px; }
+        .meta-table td { padding: 2px 0; } /* 縮減表頭資訊行距 */
         .meta-label { font-weight: 900; width: 15%; }
         .meta-val { color: #00008B; font-weight: bold; width: 35%; }
         .meta-label-right { font-weight: 900; width: 15%; text-align: right; padding-right: 10px; }
         .meta-val-right { color: #00008B; font-weight: bold; width: 35%; text-align: right; }
         
-        .item-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
-        .item-table th, .item-table td { padding: 6px 4px; text-align: center; }
+        /* 主材料表格 */
+        .item-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 5px; }
+        .item-table th, .item-table td { padding: 4px 2px; text-align: center; } /* 縮小單元格內距 */
         .item-table th { border-top: 2px solid black; border-bottom: 1px solid black; font-weight: 900; }
         .item-table tbody td { color: #00008B; font-weight: bold; }
         .item-table td.desc-col { text-align: left; }
-        .item-table tfoot td { border-top: 1px solid black; border-bottom: 2px solid black; font-weight: 900; }
+        .item-table tfoot td { border-top: 1px solid black; border-bottom: 2px solid black; font-weight: 900; padding: 6px 0; }
         
-        /* 🌟 分隔線樣式 🌟 */
+        /* 分隔線樣式 (更緊湊) */
         .separator-row td {
             border-top: 1.5px dashed #a0aec0 !important; 
-            height: 25px; 
+            height: 15px; /* 縮小虛線留白空間 */
             padding: 0 !important;
         }
 
-        /* 🌟 緊湊模式：針對打包架與基礎零件縮小字體與行距 🌟 */
+        /* 緊湊模式：針對打包架與基礎零件縮小字體與行距 */
         .compact-row td { 
-            padding: 3px 4px !important; 
+            padding: 2px 4px !important; 
             font-size: 11px !important; 
         }
 
         /* 固定送貨架表格樣式 (整體縮小) */
-        .rack-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 15px; }
-        .rack-table td { padding: 3px 4px; text-align: center; border-bottom: 1px solid #ddd; }
+        .rack-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
+        .rack-table td { padding: 2px 4px; text-align: center; border-bottom: 1px solid #ddd; }
         .rack-table td.desc-col { text-align: left; }
         .rack-table tbody td { color: #00008B; font-weight: bold; }
         .rack-table .rack-bottom-border td { border-bottom: 2px solid black; }
 
-        .footer-terms { font-size: 11px; margin-top: 5px; line-height: 1.5; }
-        .footer-terms .blue-note { color: #00008B; text-align: center; font-weight: bold; margin-bottom: 25px; }
+        /* 底部條款與簽名區 (大幅縮減空間) */
+        .footer-terms { font-size: 10px; margin-top: 5px; line-height: 1.3; } /* 縮小字體與行距 */
+        .footer-terms .blue-note { color: #00008B; text-align: center; font-weight: bold; margin-bottom: 15px; }
         .footer-terms .black-note { font-weight: 900; text-align: justify; }
         
-        .signatures { display: flex; justify-content: space-between; margin-top: 40px; font-size: 12px; font-weight: 900; }
-        .sig-box { width: 45%; text-align: center; border-top: 1px solid black; padding-top: 8px; }
-        .footer-address { margin-top: 30px; font-size: 11px; text-align: center; font-weight: 900; }
+        .signatures { display: flex; justify-content: space-between; margin-top: 25px; font-size: 12px; font-weight: 900; }
+        .sig-box { width: 45%; text-align: center; border-top: 1px solid black; padding-top: 5px; }
+        .footer-address { margin-top: 15px; font-size: 10px; text-align: center; font-weight: 900; }
 
-        /* 列印模式 */
+        /* 電腦端網頁預設列印模式 (Ctrl+P) */
         @media print {
             .no-print { display: none !important; }
             body { background: white; margin: 0; padding: 0; }
-            .dn-container { box-shadow: none; max-width: 100%; padding: 10mm; }
+            .dn-container { box-shadow: none; max-width: 100%; padding: 5mm 10mm; }
         }
     </style>
 </head>
@@ -123,7 +143,6 @@
             <div class="form-group"><label>聯絡人:</label><input type="text" id="i-contact" value="東涌42區-6座 余生 9792 7157"></div>
         </div>
 
-        <!-- 獨立的打包架輸入區 -->
         <div class="rack-input-section">
             <h4 class="rack-title">📦 輸入送貨架數量 (系統會自動將組件數量填入底部的固定表格)</h4>
             <div class="form-row">
@@ -154,9 +173,12 @@
             <label>📝 貼上 WhatsApp散裝材料清單 (此處解析出的材料會獨立顯示，不會與打包架數量合併):</label>
             <textarea id="rawInput" rows="4" placeholder="例如：二环有心(APS1000S)：123支... (這裡不需要輸入打包架)"></textarea>
         </div>
+        
+        <!-- 更新後的按鈕群組 -->
         <div class="btn-group">
             <button class="btn btn-gen" onclick="generateDN()">⬇️ 生成送貨單預覽</button>
-            <button class="btn btn-print" onclick="printDN()">🖨️ 列印 / 儲存為 PDF (並記憶單號)</button>
+            <button class="btn btn-print" onclick="printDN()">🖨️ 電腦列印 (Ctrl+P)</button>
+            <button class="btn btn-pdf" onclick="downloadMobilePDF()">📱 手機一鍵儲存 PDF</button>
         </div>
     </div>
 
@@ -204,7 +226,7 @@
                 </tr>
             </thead>
             <tbody id="out-items">
-                <!-- 自動生成 (散裝材料 + 分隔線 + 固定的6大組件) -->
+                <!-- 自動生成 -->
             </tbody>
             <tfoot>
                 <tr>
@@ -239,7 +261,6 @@
     </div>
 
     <script>
-        // 📊 內建 Excel 數據庫 (對齊名稱與單件重量)
         const db = {
             "APS500": { desc: "直桿 Standard 500", weight: 2.3 },
             "APS1000": { desc: "直桿 Standard 1000", weight: 4.6 },
@@ -302,7 +323,6 @@
             "APS300AB": { desc: "九比架 Angle Bracket 300", weight: 4.9 }
         };
 
-        // 固定的 5 種打包架資訊
         const rackConfigs = [
             { code: "APS1290RA", desc: "打包架 A : 直桿 1000*4 - 橫桿 1200*4 900*4 - 腳套 200 *4" },
             { code: "APS9090RB", desc: "打包架 B : 直桿 1000*4 - 橫桿 900*8  - 腳套 200 *4" },
@@ -311,7 +331,6 @@
             { code: "APS6060RE", desc: "打包架 E : 直桿 1000*4 - 橫桿 600*8  - 腳套 200 *4" }
         ];
 
-        // 打包架底層邏輯：拆解對應的組件數量
         const rackCompositions = {
             "APS1290RA": { "APS1000": 4, "APS1200L": 4, "APS900L": 4, "APS200BC": 4 },
             "APS9090RB": { "APS1000": 4, "APS900L": 8, "APS200BC": 4 },
@@ -320,39 +339,25 @@
             "APS6060RE": { "APS1000": 4, "APS600L": 8, "APS200BC": 4 }
         };
 
-        // 永遠固定顯示在主表格底部的 6 大基礎零件順序
         const fixedBaseComponents = [
             "APS1000", "APS600L", "APS700L", "APS900L", "APS1200L", "APS200BC"
         ];
 
-        // 地盤數據庫
         const presets = {
             "TC42-6": {
-                client: "智發建築工程有限公司", 
-                address: "香港九龍塘窩打老道155號",
-                site: "東涌42區-6座", 
-                contact: "東涌42區-6座 余生 9792 7157",
-                contract: "QUOT-CF-TC42", 
-                plate: "LV538",
-                dnPrefix: "CF-TC42(B6)-SR-DN"
+                client: "智發建築工程有限公司", address: "香港九龍塘窩打老道155號",
+                site: "東涌42區-6座", contact: "東涌42區-6座 余生 9792 7157",
+                contract: "QUOT-CF-TC42", plate: "LV538", dnPrefix: "CF-TC42(B6)-SR-DN"
             },
             "TC42-45": {
-                client: "智發建築工程有限公司", 
-                address: "香港九龍塘窩打老道155號",
-                site: "東涌42區[4-5座]", 
-                contact: "東涌42區 子健 5403 6365",
-                contract: "QUOT-CF-TC42", 
-                plate: "WL9721",
-                dnPrefix: "CF-TC42(B4-B5)-SR-DN"
+                client: "智發建築工程有限公司", address: "香港九龍塘窩打老道155號",
+                site: "東涌42區[4-5座]", contact: "東涌42區 子健 5403 6365",
+                contract: "QUOT-CF-TC42", plate: "WL9721", dnPrefix: "CF-TC42(B4-B5)-SR-DN"
             },
             "CREC-CWB36": {
-                client: "中鐵一局集團有限公司", 
-                address: "FLAT/RM A3-A5 20/F, TML TOWER, 3 HOI SHING ROAD, TSUEN WAN, NT",
-                site: "36 Clear Water Bay Road, Ngau Chi Wan, KN", 
-                contact: "傑 9207 1404 / 陽 6354 6598",
-                contract: "CREC-QT01", 
-                plate: "LV538",
-                dnPrefix: "CREC-CWB36-DN"
+                client: "中鐵一局集團有限公司", address: "FLAT/RM A3-A5 20/F, TML TOWER, 3 HOI SHING ROAD, TSUEN WAN, NT",
+                site: "36 Clear Water Bay Road, Ngau Chi Wan, KN", contact: "傑 9207 1404 / 陽 6354 6598",
+                contract: "CREC-QT01", plate: "LV538", dnPrefix: "CREC-CWB36-DN"
             }
         };
 
@@ -378,8 +383,19 @@
             }
         }
 
+        // 保存單號邏輯
+        function saveDNState() {
+            const val = document.getElementById('sitePreset').value;
+            if(val) {
+                const currentDN = document.getElementById('i-dnno').value;
+                const match = currentDN.match(/(\d+)$/);
+                if(match) {
+                    localStorage.setItem('dn_num_' + val, match[1]);
+                }
+            }
+        }
+
         function generateDN() {
-            // 同步表頭
             document.getElementById('out-client').innerText = document.getElementById('i-client').value;
             document.getElementById('out-address').innerText = document.getElementById('i-address').value;
             document.getElementById('out-site').innerText = document.getElementById('i-site').value;
@@ -389,15 +405,9 @@
             document.getElementById('out-plate').innerText = document.getElementById('i-plate').value;
             document.getElementById('out-date').innerText = document.getElementById('i-date').value;
 
-            // 初始化數量存儲
             const itemMap = {}; 
-            
-            // 基礎組件計數器 (100% 僅由打包架數量決定)
-            const baseCounts = {
-                "APS1000": 0, "APS600L": 0, "APS700L": 0, "APS900L": 0, "APS1200L": 0, "APS200BC": 0
-            };
+            const baseCounts = { "APS1000": 0, "APS600L": 0, "APS700L": 0, "APS900L": 0, "APS1200L": 0, "APS200BC": 0 };
 
-            // 1. 讀取打包架數量，並自動展開計算
             const rackInputs = {
                 "APS1290RA": parseInt(document.getElementById('i-rack-a').value) || 0,
                 "APS9090RB": parseInt(document.getElementById('i-rack-b').value) || 0,
@@ -416,11 +426,9 @@
                 }
             }
 
-            // 2. 解析 WhatsApp 文字清單 (所有的材料都當作散裝材料另外顯示)
             const raw = document.getElementById('rawInput').value;
             const segments = raw.split(/;|；|。|\n/);
-            
-            let hasScatteredItems = false; // 記錄是否有散裝材料，決定要不要印虛線
+            let hasScatteredItems = false; 
 
             segments.forEach(seg => {
                 const upperSeg = seg.toUpperCase();
@@ -437,23 +445,18 @@
                         if(nums) qty = parseInt(nums[nums.length - 1], 10);
                     }
                     
-                    if(qty > 0 && db[code]) {
-                        // 排除打包架本身的代碼，其餘全部當作獨立散裝項目加入 itemMap
-                        if (!Object.keys(rackCompositions).includes(code)) {
-                            itemMap[code] = (itemMap[code] || 0) + qty;
-                            hasScatteredItems = true;
-                        }
+                    if(qty > 0 && db[code] && !Object.keys(rackCompositions).includes(code)) {
+                        itemMap[code] = (itemMap[code] || 0) + qty;
+                        hasScatteredItems = true;
                     }
                 }
             });
 
-            // 3. 渲染主材料清單 (動態項目 + 底部固定的 6 大項目)
             let html = '';
             let totalQty = 0;
             let totalWeight = 0;
             let index = 1;
 
-            // 先渲染從文字解析出來的「散裝材料」
             for(let code in itemMap) {
                 const qty = itemMap[code];
                 const info = db[code];
@@ -472,14 +475,10 @@
                 totalWeight += weightTotal;
             }
 
-            // 🌟 如果上面有散裝材料，加入美觀的分隔線 🌟
             if (hasScatteredItems) {
-                html += `<tr class="separator-row">
-                    <td colspan="7"></td>
-                </tr>`;
+                html += `<tr class="separator-row"><td colspan="7"></td></tr>`;
             }
 
-            // 最後固定渲染由打包架拆解出來的 6 大基礎零件
             for(let code of fixedBaseComponents) {
                 const qty = baseCounts[code];
                 const info = db[code];
@@ -494,7 +493,6 @@
                     <td style="width: 12%;">${weightTotal > 0 ? weightTotal.toFixed(2) : '0'}</td>
                     <td style="width: 13%;"></td>
                 </tr>`;
-                
                 totalQty += qty;
                 totalWeight += weightTotal;
             }
@@ -503,12 +501,10 @@
             document.getElementById('out-total-qty').innerText = totalQty;
             document.getElementById('out-total-weight').innerText = totalWeight.toFixed(2);
 
-            // 4. 渲染底部獨立的打包架明細 A~E
             let rackHtml = '';
             rackConfigs.forEach((rack, i) => {
                 const q = rackInputs[rack.code];
                 const qStr = q > 0 ? q : '';
-                // 為了排版美觀，只在最後一行加上底線
                 const trClass = (i === rackConfigs.length - 1) ? 'rack-bottom-border compact-row' : 'compact-row';
                 
                 rackHtml += `<tr class="${trClass}">
@@ -524,17 +520,34 @@
             document.getElementById('out-racks').innerHTML = rackHtml;
         }
 
+        // 🖨️ 原本的電腦端列印
         function printDN() {
             generateDN();
-            const val = document.getElementById('sitePreset').value;
-            if(val) {
-                const currentDN = document.getElementById('i-dnno').value;
-                const match = currentDN.match(/(\d+)$/);
-                if(match) {
-                    localStorage.setItem('dn_num_' + val, match[1]);
-                }
-            }
+            saveDNState();
             window.print();
+        }
+
+        // 📱 新增的手機端生成 PDF 功能
+        function downloadMobilePDF() {
+            // 先確保數據已生成並儲存單號
+            generateDN();
+            saveDNState();
+
+            // 抓取目標區域和檔案名稱
+            const element = document.getElementById('printableArea');
+            const dnNo = document.getElementById('i-dnno').value || 'Delivery_Note';
+
+            // 設定 PDF 生成參數 (強制適配 A4 大小)
+            const opt = {
+                margin:       [10, 5, 10, 5], // 上, 右, 下, 左 的邊距 (mm)
+                filename:     `${dnNo}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true }, // scale:2 提高清晰度, useCORS 確保 Logo 能載入
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // 執行下載
+            html2pdf().set(opt).from(element).save();
         }
     </script>
 </body>
