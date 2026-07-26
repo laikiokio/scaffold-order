@@ -22,11 +22,12 @@
         
         /* 送貨單 A4 預覽與列印樣式 */
         .dn-container { max-width: 210mm; min-height: 297mm; margin: 0 auto; background: white; padding: 15mm 20mm; box-shadow: 0 0 10px rgba(0,0,0,0.2); box-sizing: border-box; color: #000; }
-        .header-logo { display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
-        .logo-shape { width: 50px; height: 50px; background: linear-gradient(135deg, #FFCC00 50%, #999 50%); margin-right: 15px; border: 2px solid #333; }
-        .header-text h1 { margin: 0; font-size: 32px; font-weight: 900; letter-spacing: 2px; }
-        .header-text h3 { margin: 0; font-size: 15px; font-weight: bold; letter-spacing: 0.5px; }
-        .dn-title { text-align: center; margin: 15px 0 25px; }
+        
+        /* 使用真實 Logo 圖片的樣式 */
+        .header-logo { display: flex; justify-content: center; margin-bottom: 15px; width: 100%; }
+        .header-logo img { max-width: 90%; max-height: 85px; object-fit: contain; }
+        
+        .dn-title { text-align: center; margin: 10px 0 25px; }
         .dn-title h2 { margin: 0; font-size: 22px; letter-spacing: 5px; font-weight: 900; }
         .dn-title span { font-size: 16px; font-weight: normal; letter-spacing: 1px; }
         
@@ -104,15 +105,13 @@
         </div>
     </div>
 
-    <!-- 正式送貨單版面 (完美復刻 PDF) -->
+    <!-- 正式送貨單版面 -->
     <div class="dn-container" id="printableArea">
+        <!-- 替換為真實 Logo 圖片 -->
         <div class="header-logo">
-            <div class="logo-shape"></div>
-            <div class="header-text">
-                <h1>晉昌鋼架工程有限公司</h1>
-                <h3>Advance Prosperity Scaffold Engineering Limited</h3>
-            </div>
+            <img src="logo.png" alt="晉昌鋼架工程有限公司">
         </div>
+        
         <div class="dn-title">
             <h2>送貨單</h2>
             <span>Delivery Note</span>
