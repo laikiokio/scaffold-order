@@ -111,7 +111,7 @@
 
         <!-- 獨立的打包架輸入區 -->
         <div class="rack-input-section">
-            <h4 class="rack-title">📦 輸入送貨架數量 (系統會自動拆解為直桿/橫桿/腳套加入總數)</h4>
+            <h4 class="rack-title">📦 輸入送貨架數量 (系統會自動將組件數量填入底部的固定表格)</h4>
             <div class="form-row">
                 <div class="form-group">
                     <label>架A (APS1290RA)<br>直1000*4/橫1200*4/橫900*4</label>
@@ -137,7 +137,7 @@
         </div>
 
         <div class="form-group">
-            <label>📝 貼上 WhatsApp 其他材料清單 (系統會自動抓取 APS 編號與數量):</label>
+            <label>📝 貼上 WhatsApp散裝材料清單 (此處解析出的材料會獨立顯示，不會與打包架數量合併):</label>
             <textarea id="rawInput" rows="4" placeholder="例如：二环有心(APS1000S)：123支... (這裡不需要輸入打包架)"></textarea>
         </div>
         <div class="btn-group">
@@ -190,7 +190,7 @@
                 </tr>
             </thead>
             <tbody id="out-items">
-                <!-- 自動生成 (其他材料 + 固定的6大組件) -->
+                <!-- 自動生成 (散裝材料 + 固定的6大組件) -->
             </tbody>
             <tfoot>
                 <tr>
@@ -359,7 +359,7 @@
             // 初始化數量存儲
             const itemMap = {}; 
             
-            // 基礎組件計數器 (直桿與橫桿)
+            // 基礎組件計數器 (100% 僅由打包架數量決定)
             const baseCounts = {
                 "APS1000": 0, "APS600L": 0, "APS700L": 0, "APS900L": 0, "APS1200L": 0, "APS200BC": 0
             };
@@ -383,7 +383,7 @@
                 }
             }
 
-            // 2. 解析 WhatsApp 文字清單
+            // 2. 解析 WhatsApp 文字清單 (所有的材料，包括可能重複的基礎組件，都當作散裝材料另外顯示)
             const raw = document.getElementById('rawInput').value;
             const segments = raw.split(/;|；|。|\n/);
             
@@ -403,12 +403,8 @@
                     }
                     
                     if(qty > 0 && db[code]) {
-                        // 如果貼上的文字中包含了 6 大基礎零件，也要把它加進底部的固定統計裡
-                        if (fixedBaseComponents.includes(code)) {
-                            baseCounts[code] += qty;
-                        } 
-                        // 排除用戶不小心貼上打包架代碼，因為已經有獨立輸入格了
-                        else if (!Object.keys(rackCompositions).includes(code)) {
+                        // 排除打包架本身的代碼，其餘全部當作獨立散裝項目加入 itemMap
+                        if (!Object.keys(rackCompositions).includes(code)) {
                             itemMap[code] = (itemMap[code] || 0) + qty;
                         }
                     }
@@ -421,7 +417,7 @@
             let totalWeight = 0;
             let index = 1;
 
-            // 先渲染非基礎的動態材料
+            // 先渲染從文字解析出來的「散裝材料」
             for(let code in itemMap) {
                 const qty = itemMap[code];
                 const info = db[code];
@@ -440,7 +436,7 @@
                 totalWeight += weightTotal;
             }
 
-            // 最後固定渲染 6 大基礎零件 (就算數量為 0 也要印出來)
+            // 最後固定渲染由打包架拆解出來的 6 大基礎零件
             for(let code of fixedBaseComponents) {
                 const qty = baseCounts[code];
                 const info = db[code];
