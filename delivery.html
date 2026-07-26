@@ -12,7 +12,14 @@
         .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
         .form-group { flex: 1; }
         label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #555; }
-        input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
+        input[type="text"], input[type="date"], select, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
+        
+        /* 打包架輸入區專屬樣式 */
+        .rack-input-section { background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #d1d5db; }
+        .rack-input-section .rack-title { color: #d97706; font-size: 15px; margin-bottom: 10px; border-bottom: none; padding-bottom: 0; }
+        .rack-input-section .form-group label { font-size: 11px; color: #4b5563; }
+        .rack-input-section input[type="number"] { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; text-align: center; font-weight: bold; font-size: 16px; color: #00008B; }
+
         .btn-group { display: flex; gap: 10px; margin-top: 15px; }
         .btn { flex: 1; padding: 12px; font-size: 16px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; color: white; transition: 0.2s; }
         .btn-gen { background: #25D366; }
@@ -49,9 +56,10 @@
         .rack-table td { padding: 6px 4px; text-align: center; border-bottom: 1px solid #ddd; }
         .rack-table td.desc-col { text-align: left; }
         .rack-table tbody td { color: #00008B; font-weight: bold; }
+        .rack-table .rack-bottom-border td { border-bottom: 2px solid black; }
 
-        .footer-terms { font-size: 11px; margin-top: 20px; line-height: 1.5; }
-        .footer-terms .blue-note { color: #00008B; text-align: center; font-weight: bold; margin-bottom: 15px; }
+        .footer-terms { font-size: 11px; margin-top: 5px; line-height: 1.5; }
+        .footer-terms .blue-note { color: #00008B; text-align: center; font-weight: bold; margin-bottom: 25px; }
         .footer-terms .black-note { font-weight: 900; text-align: justify; }
         
         .signatures { display: flex; justify-content: space-between; margin-top: 40px; font-size: 12px; font-weight: 900; }
@@ -100,9 +108,37 @@
         <div class="form-row">
             <div class="form-group"><label>聯絡人:</label><input type="text" id="i-contact" value="東涌42區-6座 余生 9792 7157"></div>
         </div>
+
+        <!-- 獨立的打包架輸入區 -->
+        <div class="rack-input-section">
+            <h4 class="rack-title">📦 輸入送貨架數量 (系統會自動拆解為直桿/橫桿/腳套加入總數)</h4>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>架A (APS1290RA)<br>直1000*4/橫1200*4/橫900*4</label>
+                    <input type="number" id="i-rack-a" min="0" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label>架B (APS9090RB)<br>直1000*4/橫900*8</label>
+                    <input type="number" id="i-rack-b" min="0" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label>架C (APS9060RC)<br>直1000*4/橫900*4/橫600*4</label>
+                    <input type="number" id="i-rack-c" min="0" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label>架D (APS9070RD)<br>直1000*4/橫900*4/橫700*4</label>
+                    <input type="number" id="i-rack-d" min="0" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label>架E (APS6060RE)<br>直1000*4/橫600*8</label>
+                    <input type="number" id="i-rack-e" min="0" placeholder="0">
+                </div>
+            </div>
+        </div>
+
         <div class="form-group">
-            <label>📝 貼上 WhatsApp 材料清單 (自動識別普通材料及送貨架 A~E):</label>
-            <textarea id="rawInput" rows="5" placeholder="例如：二环有心(APS1000S)：123支； 打包架A：2個..."></textarea>
+            <label>📝 貼上 WhatsApp 其他材料清單 (系統會自動抓取 APS 編號與數量):</label>
+            <textarea id="rawInput" rows="4" placeholder="例如：二环有心(APS1000S)：123支... (這裡不需要輸入打包架)"></textarea>
         </div>
         <div class="btn-group">
             <button class="btn btn-gen" onclick="generateDN()">⬇️ 生成送貨單預覽</button>
@@ -154,7 +190,7 @@
                 </tr>
             </thead>
             <tbody id="out-items">
-                <!-- 自動生成 -->
+                <!-- 自動生成 (其他材料 + 固定的6大組件) -->
             </tbody>
             <tfoot>
                 <tr>
@@ -189,6 +225,7 @@
     </div>
 
     <script>
+        // 📊 內建 Excel 數據庫 (對齊名稱與單件重量)
         const db = {
             "APS500": { desc: "直桿 Standard 500", weight: 2.3 },
             "APS1000": { desc: "直桿 Standard 1000", weight: 4.6 },
@@ -251,13 +288,27 @@
             "APS300AB": { desc: "九比架 Angle Bracket 300", weight: 4.9 }
         };
 
-        // 固定的 5 種送貨架規格清單
+        // 固定的 5 種打包架資訊
         const rackConfigs = [
             { code: "APS1290RA", desc: "打包架 A : 直桿 1000*4 - 橫桿 1200*4 900*4 - 腳套 200 *4" },
             { code: "APS9090RB", desc: "打包架 B : 直桿 1000*4 - 橫桿 900*8  - 腳套 200 *4" },
             { code: "APS9060RC", desc: "打包架 C : 直桿 1000*4 - 橫桿 900*4 600*4 - 腳套 200 *4" },
-            { code: "APS9070RD", desc: "打包架 D : 直桿 900*4 - 橫桿 900*4 700*4 - 腳套 200 *4" },
+            { code: "APS9070RD", desc: "打包架 D : 直桿 1000*4 - 橫桿 900*4 700*4 - 腳套 200 *4" },
             { code: "APS6060RE", desc: "打包架 E : 直桿 1000*4 - 橫桿 600*8  - 腳套 200 *4" }
+        ];
+
+        // 打包架底層邏輯：拆解對應的組件數量
+        const rackCompositions = {
+            "APS1290RA": { "APS1000": 4, "APS1200L": 4, "APS900L": 4, "APS200BC": 4 },
+            "APS9090RB": { "APS1000": 4, "APS900L": 8, "APS200BC": 4 },
+            "APS9060RC": { "APS1000": 4, "APS900L": 4, "APS600L": 4, "APS200BC": 4 },
+            "APS9070RD": { "APS1000": 4, "APS900L": 4, "APS700L": 4, "APS200BC": 4 },
+            "APS6060RE": { "APS1000": 4, "APS600L": 8, "APS200BC": 4 }
+        };
+
+        // 永遠固定顯示在主表格底部的 6 大基礎零件順序
+        const fixedBaseComponents = [
+            "APS1000", "APS600L", "APS700L", "APS900L", "APS1200L", "APS200BC"
         ];
 
         const presets = {
@@ -295,6 +346,7 @@
         }
 
         function generateDN() {
+            // 同步表頭
             document.getElementById('out-client').innerText = document.getElementById('i-client').value;
             document.getElementById('out-address').innerText = document.getElementById('i-address').value;
             document.getElementById('out-site').innerText = document.getElementById('i-site').value;
@@ -304,10 +356,36 @@
             document.getElementById('out-plate').innerText = document.getElementById('i-plate').value;
             document.getElementById('out-date').innerText = document.getElementById('i-date').value;
 
+            // 初始化數量存儲
+            const itemMap = {}; 
+            
+            // 基礎組件計數器 (直桿與橫桿)
+            const baseCounts = {
+                "APS1000": 0, "APS600L": 0, "APS700L": 0, "APS900L": 0, "APS1200L": 0, "APS200BC": 0
+            };
+
+            // 1. 讀取打包架數量，並自動展開計算
+            const rackInputs = {
+                "APS1290RA": parseInt(document.getElementById('i-rack-a').value) || 0,
+                "APS9090RB": parseInt(document.getElementById('i-rack-b').value) || 0,
+                "APS9060RC": parseInt(document.getElementById('i-rack-c').value) || 0,
+                "APS9070RD": parseInt(document.getElementById('i-rack-d').value) || 0,
+                "APS6060RE": parseInt(document.getElementById('i-rack-e').value) || 0
+            };
+
+            for (let rackCode in rackInputs) {
+                let rackQty = rackInputs[rackCode];
+                if (rackQty > 0) {
+                    let comps = rackCompositions[rackCode];
+                    for (let cCode in comps) {
+                        baseCounts[cCode] += (comps[cCode] * rackQty);
+                    }
+                }
+            }
+
+            // 2. 解析 WhatsApp 文字清單
             const raw = document.getElementById('rawInput').value;
             const segments = raw.split(/;|；|。|\n/);
-            const itemMap = {};
-            const rackMap = {};
             
             segments.forEach(seg => {
                 const upperSeg = seg.toUpperCase();
@@ -324,23 +402,26 @@
                         if(nums) qty = parseInt(nums[nums.length - 1], 10);
                     }
                     
-                    if(qty > 0) {
-                        // 判斷是否為送貨架 (RA, RB, RC, RD, RE)
-                        if(["APS1290RA", "APS9090RB", "APS9060RC", "APS9070RD", "APS6060RE"].includes(code)) {
-                            rackMap[code] = (rackMap[code] || 0) + qty;
-                        } else if(db[code]) {
+                    if(qty > 0 && db[code]) {
+                        // 如果貼上的文字中包含了 6 大基礎零件，也要把它加進底部的固定統計裡
+                        if (fixedBaseComponents.includes(code)) {
+                            baseCounts[code] += qty;
+                        } 
+                        // 排除用戶不小心貼上打包架代碼，因為已經有獨立輸入格了
+                        else if (!Object.keys(rackCompositions).includes(code)) {
                             itemMap[code] = (itemMap[code] || 0) + qty;
                         }
                     }
                 }
             });
 
-            // 1. 渲染主材料清單
+            // 3. 渲染主材料清單 (動態項目 + 底部固定的 6 大項目)
             let html = '';
             let totalQty = 0;
             let totalWeight = 0;
             let index = 1;
 
+            // 先渲染非基礎的動態材料
             for(let code in itemMap) {
                 const qty = itemMap[code];
                 const info = db[code];
@@ -355,6 +436,25 @@
                     <td style="width: 12%;">${weightTotal.toFixed(2)}</td>
                     <td style="width: 13%;"></td>
                 </tr>`;
+                totalQty += qty;
+                totalWeight += weightTotal;
+            }
+
+            // 最後固定渲染 6 大基礎零件 (就算數量為 0 也要印出來)
+            for(let code of fixedBaseComponents) {
+                const qty = baseCounts[code];
+                const info = db[code];
+                const weightTotal = qty * info.weight;
+
+                html += `<tr>
+                    <td style="width: 5%;">${index++}</td>
+                    <td style="width: 15%;">${code}</td>
+                    <td style="width: 35%; text-align: left;" class="desc-col">${info.desc}</td>
+                    <td style="width: 10%;">${info.weight.toFixed(2)}</td>
+                    <td style="width: 10%; color: ${qty > 0 ? '#00008B' : '#000'};">${qty}</td>
+                    <td style="width: 12%;">${weightTotal > 0 ? weightTotal.toFixed(2) : '0'}</td>
+                    <td style="width: 13%;"></td>
+                </tr>`;
                 
                 totalQty += qty;
                 totalWeight += weightTotal;
@@ -364,16 +464,20 @@
             document.getElementById('out-total-qty').innerText = totalQty;
             document.getElementById('out-total-weight').innerText = totalWeight.toFixed(2);
 
-            // 2. 渲染固定的 5 種送貨架表格 (A ~ E)
+            // 4. 渲染底部獨立的打包架明細 A~E
             let rackHtml = '';
-            rackConfigs.forEach(rack => {
-                const q = rackMap[rack.code] || '';
-                rackHtml += `<tr>
+            rackConfigs.forEach((rack, i) => {
+                const q = rackInputs[rack.code];
+                const qStr = q > 0 ? q : '';
+                // 為了排版美觀，只在最後一行加上底線
+                const trClass = (i === rackConfigs.length - 1) ? 'rack-bottom-border' : '';
+                
+                rackHtml += `<tr class="${trClass}">
                     <td style="width: 5%;"></td>
                     <td style="width: 15%;">${rack.code}</td>
                     <td style="width: 35%; text-align: left;" class="desc-col">${rack.desc}</td>
                     <td style="width: 10%;"></td>
-                    <td style="width: 10%;">${q}</td>
+                    <td style="width: 10%;">${qStr}</td>
                     <td style="width: 12%;"></td>
                     <td style="width: 13%;"></td>
                 </tr>`;
