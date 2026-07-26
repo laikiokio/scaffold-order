@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🏗 晉昌鋼架柯打編輯器</title>
+    <title>📦 晉昌鋼架柯打編輯器</title>
     <style>
         :root {
             --primary: #25D366; 
@@ -74,7 +74,7 @@
 </head>
 <body>
     <div class="app-container">
-        <h2>📦晉昌鋼架柯打編輯器</h2>
+        <h2>📦 晉昌鋼架柯打編輯器</h2>
 
         <div class="form-row form-group">
             <div class="form-group">
@@ -102,6 +102,7 @@
                 <option value="智發-東涌42[6座] (租賃)">智發-東涌42[6座] (租賃)</option>
                 <option value="景澤-東涌(租賃)">景澤-東涌(租賃)</option>
                 <option value="恆德-藍田(租賃)">恆德-藍田(租賃)</option>
+                <option value="熙信 - 謝斐道(租賃)">熙信 - 謝斐道(租賃)</option>
                 <option value="custom">-- 其他地盤 (手動輸入) --</option>
             </select>
             <input type="text" id="customSite" style="display:none; margin-top:8px;" placeholder="請輸入新地盤名稱">
@@ -169,17 +170,17 @@
             "熙信 - 謝斐道(租賃)": "鄭生 6449 9116"
         };
 
-        // 🚚 車牌與司機資料庫
+        // 🚚 車牌與司機資料庫 (精準對應 HTML 中的 value)
         const driverDatabase = {
             "LV538": "*斌哥 5636 6199*",
-            "街車 UX3633": "*倫60996434*",
+            "UX3633": "*倫60996434*",
             "街車 YM3989": "*棟 9628 0816*",
             "街車 WL9721": "*光 94873324*",
             "街車 TD1814": "志 9860 5480",
-            "街車 XW142": "*偉 67977984*",
-            "街車 ZX2448": "*棟 9628 0816*",
-            "街車 TL142": "*俊 61210710*",
-            "街車 VT6338": "黎輝 9838 9093"
+            "XW142": "*偉 67977984*",
+            "ZX2448": "*棟 9628 0816*",
+            "TL142": "*俊 61210710*",
+            "VT6338": "黎輝 9838 9093"
         };
 
         // DOM 元素綁定
@@ -200,7 +201,7 @@
         // 初始化日期為今天
         els.date.valueAsDate = new Date();
 
-        // 格式化日期函數 (生成如: 27/07/2026[星期一])
+        // 格式化日期函數
         function formatDate(dateStr) {
             if (!dateStr) return "";
             const d = new Date(dateStr);
