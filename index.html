@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🏗 晉昌鋼架柯打編輯器</title>
+    <title>📦 晉昌鋼架柯打編輯器</title>
     <style>
         :root {
             --primary: #25D366; 
@@ -36,22 +36,51 @@
             border-bottom: 2px solid #f0f0f0;
             padding-bottom: 10px;
         }
-        .form-group { margin-bottom: 15px; }
-        .form-row { display: flex; gap: 10px; }
-        .form-row .form-group { flex: 1; margin-bottom: 0; }
+        .form-group { margin-bottom: 15px; width: 100%; }
+        
+        /* 針對手機並排顯示的修復 */
+        .form-row { 
+            display: flex; 
+            gap: 10px; 
+            width: 100%; 
+        }
+        .form-row .form-group { 
+            flex: 1 1 0; /* 強制平均分配 */
+            min-width: 0; /* 這是防止 iOS 日期框溢出的關鍵 */
+            margin-bottom: 0; 
+        }
+        /* 自訂特定比例 */
+        .flex-35 { flex: 3.5 1 0 !important; }
+        .flex-65 { flex: 6.5 1 0 !important; }
+
         label {
             display: block; font-size: 14px; font-weight: 600;
             margin-bottom: 6px; color: #4b5563;
         }
+        
+        /* 統一所有輸入框在 iOS 上的樣式 */
         input[type="text"], input[type="number"], input[type="date"], select, textarea {
-            width: 100%; padding: 10px; border: 1px solid var(--border);
-            border-radius: 8px; box-sizing: border-box; font-size: 16px; 
-            background-color: #fafafa; transition: border-color 0.2s;
+            width: 100%; 
+            min-height: 44px; /* 蘋果建議的標準觸控高度 */
+            padding: 8px 10px; 
+            border: 1px solid var(--border);
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            font-size: 16px; /* 防止 iOS 點擊時自動放大螢幕 */
+            background-color: #fafafa; 
+            transition: border-color 0.2s;
+            margin: 0; /* 清除 iOS 預設外距 */
         }
         input:focus, select:focus, textarea:focus {
             outline: none; border-color: var(--primary); background-color: #fff;
         }
-        textarea { resize: vertical; min-height: 140px; line-height: 1.5; }
+        
+        textarea { 
+            resize: vertical; 
+            min-height: 140px; 
+            line-height: 1.5; 
+        }
+        
         .btn {
             width: 100%; padding: 14px; background-color: var(--primary);
             color: white; border: none; border-radius: 8px; font-size: 16px;
@@ -74,7 +103,7 @@
 </head>
 <body>
     <div class="app-container">
-        <h2>🏗 晉昌鋼架柯打編輯器</h2>
+        <h2>📦 晉昌鋼架柯打編輯器</h2>
 
         <div class="form-row form-group">
             <div class="form-group">
@@ -114,11 +143,11 @@
         </div>
 
         <div class="form-row form-group">
-            <div class="form-group" style="flex: 0.4;">
+            <div class="form-group flex-35">
                 <label>第幾車</label>
                 <input type="number" id="carNum" value="1" min="1">
             </div>
-            <div class="form-group" style="flex: 0.6;">
+            <div class="form-group flex-65">
                 <label>車牌 (自動綁定司機)</label>
                 <select id="plateSelect">
                     <optgroup label="APS 車隊">
@@ -134,7 +163,7 @@
                         <option value="TL142">TL142 (俊)</option>
                         <option value="VT6338">VT6338 (黎輝)</option>
                     </optgroup>
-                    <option value="custom">-- 其他車牌 (手動輸入) --</option>
+                    <option value="custom">-- 其他 (手動輸入) --</option>
                 </select>
                 <input type="text" id="customPlate" style="display:none; margin-top:8px;" placeholder="請輸入新車牌">
             </div>
@@ -170,7 +199,7 @@
             "熙信 - 謝斐道(租賃)": "鄭生 6449 9116"
         };
 
-        // 🚚 車牌與司機資料庫 (精準對應 HTML 中的 value)
+        // 🚚 車牌與司機資料庫
         const driverDatabase = {
             "LV538": "*斌哥 5636 6199*",
             "UX3633": "*倫60996434*",
