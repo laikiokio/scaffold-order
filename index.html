@@ -39,17 +39,8 @@
         .form-group { margin-bottom: 15px; width: 100%; }
         
         /* 針對手機並排顯示的修復 */
-        .form-row { 
-            display: flex; 
-            gap: 10px; 
-            width: 100%; 
-        }
-        .form-row .form-group { 
-            flex: 1 1 0; /* 強制平均分配 */
-            min-width: 0; /* 這是防止 iOS 日期框溢出的關鍵 */
-            margin-bottom: 0; 
-        }
-        /* 自訂特定比例 */
+        .form-row { display: flex; gap: 10px; width: 100%; }
+        .form-row .form-group { flex: 1 1 0; min-width: 0; margin-bottom: 0; }
         .flex-35 { flex: 3.5 1 0 !important; }
         .flex-65 { flex: 6.5 1 0 !important; }
 
@@ -58,28 +49,17 @@
             margin-bottom: 6px; color: #4b5563;
         }
         
-        /* 統一所有輸入框在 iOS 上的樣式 */
         input[type="text"], input[type="number"], input[type="date"], select, textarea {
-            width: 100%; 
-            min-height: 44px; /* 蘋果建議的標準觸控高度 */
-            padding: 8px 10px; 
-            border: 1px solid var(--border);
-            border-radius: 8px; 
-            box-sizing: border-box; 
-            font-size: 16px; /* 防止 iOS 點擊時自動放大螢幕 */
-            background-color: #fafafa; 
-            transition: border-color 0.2s;
-            margin: 0; /* 清除 iOS 預設外距 */
+            width: 100%; min-height: 44px; padding: 8px 10px; 
+            border: 1px solid var(--border); border-radius: 8px; 
+            box-sizing: border-box; font-size: 16px; 
+            background-color: #fafafa; transition: border-color 0.2s; margin: 0;
         }
         input:focus, select:focus, textarea:focus {
             outline: none; border-color: var(--primary); background-color: #fff;
         }
         
-        textarea { 
-            resize: vertical; 
-            min-height: 140px; 
-            line-height: 1.5; 
-        }
+        textarea { resize: vertical; min-height: 140px; line-height: 1.5; }
         
         .btn {
             width: 100%; padding: 14px; background-color: var(--primary);
@@ -99,6 +79,7 @@
             line-height: 1.5; color: #111b21; user-select: all;
         }
         .notice { font-size: 12px; color: #6b7280; text-align: center; margin-top: 10px; }
+        .hint-text { font-size: 11px; color: #d97706; margin-top: 4px; display: block; }
     </style>
 </head>
 <body>
@@ -124,7 +105,7 @@
         </div>
 
         <div class="form-group">
-            <label>地盤選擇 (自動綁定聯絡人)</label>
+            <label>地盤選擇 (自動綁定聯絡人與車次)</label>
             <select id="siteSelect">
                 <option value="中鐵-清水灣(租賃)">中鐵-清水灣(租賃)</option>
                 <option value="智發-東涌42區[4-5座] (租賃)">智發-東涌42區[4-5座] (租賃)</option>
@@ -146,6 +127,7 @@
             <div class="form-group flex-35">
                 <label>第幾車</label>
                 <input type="number" id="carNum" value="1" min="1">
+                <span class="hint-text" id="carNumHint">已自動+1</span>
             </div>
             <div class="form-group flex-65">
                 <label>車牌 (自動綁定司機)</label>
@@ -179,8 +161,8 @@
             <textarea id="materials" placeholder="在此直接貼上送貨明細...&#10;&#10;(橋B落料) 下路&#10;直杆2.0米 (有駁芯) =3碼&#10;..."></textarea>
         </div>
 
-        <button class="btn" onclick="copyToWhatsApp()">一鍵複製內容</button>
-        <div class="notice">複製後即可直接貼上到群組</div>
+        <button class="btn" onclick="copyToWhatsApp()">一鍵複製內容 (並記憶車次)</button>
+        <div class="notice">複製後即可直接貼上到群組，系統會自動記住當前車次。</div>
 
         <div class="preview-section">
             <label style="font-size: 13px; color: #555; margin-bottom: 8px; display: block;">實時預覽：</label>
@@ -220,6 +202,7 @@
             customSite: document.getElementById('customSite'),
             contact: document.getElementById('contactInfo'),
             carNum: document.getElementById('carNum'),
+            carNumHint: document.getElementById('carNumHint'),
             plate: document.getElementById('plateSelect'),
             customPlate: document.getElementById('customPlate'),
             driver: document.getElementById('driver'),
@@ -230,7 +213,6 @@
         // 初始化日期為今天
         els.date.valueAsDate = new Date();
 
-        // 格式化日期函數
         function formatDate(dateStr) {
             if (!dateStr) return "";
             const d = new Date(dateStr);
@@ -241,15 +223,28 @@
             return `${dd}/${mm}/${yyyy}[${days[d.getDay()]}]`;
         }
 
-        // 🔄 更新地盤聯絡人
+        // 🔄 更新地盤：綁定聯絡人 + 自動讀取記憶的車次
         function handleSiteChange() {
             const selected = els.site.value;
             if (selected === 'custom') {
                 els.customSite.style.display = 'block';
                 els.contact.value = '';
+                els.carNumHint.style.display = 'none';
             } else {
                 els.customSite.style.display = 'none';
                 els.contact.value = siteDatabase[selected] || '';
+                
+                // 讀取該地盤上一次的車次記憶
+                const lastNum = localStorage.getItem('site_car_num_' + selected);
+                if (lastNum) {
+                    els.carNum.value = parseInt(lastNum, 10) + 1;
+                    els.carNumHint.innerText = `上車為 ${lastNum}，已自動+1`;
+                    els.carNumHint.style.display = 'block';
+                } else {
+                    // 如果沒有記憶，預設給 1
+                    // els.carNum.value = 1; (保留你當前輸入框的值，不強制清零，比較彈性)
+                    els.carNumHint.style.display = 'none';
+                }
             }
             updatePreview();
         }
@@ -267,7 +262,6 @@
             updatePreview();
         }
 
-        // 📝 生成最終排版文字
         function generateMessage() {
             const dateText = formatDate(els.date.value);
             const timeText = els.time.value;
@@ -290,29 +284,36 @@
             return msg;
         }
 
-        // 👁️ 更新預覽區
         function updatePreview() {
             els.preview.innerText = generateMessage();
         }
 
-        // 綁定所有事件監聽，實現實時預覽
         Object.values(els).forEach(el => {
-            if(el && el.tagName) {
+            if(el && el.tagName && el.id !== 'carNumHint') {
                 el.addEventListener('input', updatePreview);
                 el.addEventListener('change', updatePreview);
             }
         });
 
-        // 獨立綁定地盤和車牌選擇事件
         els.site.addEventListener('change', handleSiteChange);
         els.plate.addEventListener('change', handlePlateChange);
 
-        // 📋 一鍵複製功能
+        // 📋 一鍵複製功能 (並將當前車次寫入記憶)
         function copyToWhatsApp() {
             const text = generateMessage();
+            
+            // 儲存當前車次紀錄到本機瀏覽器
+            const selectedSite = els.site.value;
+            if (selectedSite !== 'custom') {
+                localStorage.setItem('site_car_num_' + selectedSite, els.carNum.value);
+            }
+
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(text).then(() => {
-                    alert("✅ 已成功複製，請前往 WhatsApp 貼上！");
+                    alert("✅ 已成功複製，並記住當前車次！");
+                    // 複製完後稍微更新一下提示文字
+                    els.carNumHint.innerText = `已儲存紀錄為第 ${els.carNum.value} 車`;
+                    els.carNumHint.style.display = 'block';
                 }).catch(() => fallbackCopy(text));
             } else {
                 fallbackCopy(text);
@@ -328,14 +329,14 @@
             ta.select();
             try {
                 document.execCommand('copy');
-                alert("✅ 已成功複製，請前往 WhatsApp 貼上！");
+                alert("✅ 已成功複製，並記住當前車次！");
             } catch (err) {
                 alert("請長按下方預覽區手動複製");
             }
             document.body.removeChild(ta);
         }
 
-        // 初始執行一次以載入預設畫面
+        // 初始執行
         handleSiteChange();
         handlePlateChange();
     </script>
