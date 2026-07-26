@@ -1,0 +1,314 @@
+html_content = """<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>腳手架 Order 編輯器</title>
+    <style>
+        :root {
+            --primary: #25D366; /* WhatsApp Green */
+            --primary-dark: #128C7E;
+            --bg: #f4f6f8;
+            --card-bg: #ffffff;
+            --text: #1c1e21;
+            --border: #d1d5db;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 15px;
+        }
+        .app-container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+            font-size: 20px;
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-row {
+            display: flex;
+            gap: 10px;
+        }
+        .form-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #4b5563;
+        }
+        input[type="text"], input[type="number"], input[type="date"], select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px; /* 阻止 iOS 自動放大 */
+            background-color: #fafafa;
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            background-color: #fff;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 140px;
+            line-height: 1.5;
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 2px 4px rgba(37, 211, 102, 0.3);
+        }
+        .btn:active {
+            background-color: var(--primary-dark);
+            transform: scale(0.98);
+        }
+        .preview-section {
+            margin-top: 20px;
+            background: #e5ddd5; /* 仿 WhatsApp 聊天背景 */
+            padding: 15px;
+            border-radius: 8px;
+            position: relative;
+        }
+        .preview-bubble {
+            background: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border-top-left-radius: 0;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+            white-space: pre-wrap;
+            font-family: inherit;
+            font-size: 15px;
+            line-height: 1.5;
+            color: #111b21;
+            user-select: all;
+        }
+        .notice {
+            font-size: 12px;
+            color: #6b7280;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <h2>📦 腳手架 Order 編輯器</h2>
+
+        <div class="form-row form-group">
+            <div class="form-group">
+                <label>日期</label>
+                <input type="date" id="dateInput">
+            </div>
+            <div class="form-group">
+                <label>時段/動作</label>
+                <select id="timeSlot">
+                    <option value="上午送">上午送</option>
+                    <option value="下午送">下午送</option>
+                    <option value="下午送貨">下午送貨</option>
+                    <option value="後加">後加</option>
+                    <option value="收貨">收貨</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>地盤選擇 (自動綁定聯絡人)</label>
+            <select id="siteSelect">
+                <option value="中鐵-清水灣(租賃)">中鐵-清水灣(租賃)</option>
+                <option value="智發-東涌42區[4-5座] (租賃)">智發-東涌42區[4-5座] (租賃)</option>
+                <option value="智發-東涌42區[6座] (租賃)">智發-東涌42區[6座] (租賃)</option>
+                <option value="custom">-- 其他地盤 (手動輸入) --</option>
+            </select>
+            <input type="text" id="customSite" style="display:none; margin-top:8px;" placeholder="請輸入新地盤名稱">
+        </div>
+
+        <div class="form-group">
+            <label>地盤聯絡人</label>
+            <input type="text" id="contactInfo">
+        </div>
+
+        <div class="form-row form-group">
+            <div class="form-group" style="flex: 0.6;">
+                <label>第幾車</label>
+                <input type="number" id="carNum" value="1" min="1">
+            </div>
+            <div class="form-group">
+                <label>車牌</label>
+                <input type="text" id="plate" placeholder="例: LV538">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>司機 (名字 & 電話)</label>
+            <input type="text" id="driver" placeholder="例: *斌哥 5636 6199*">
+        </div>
+
+        <div class="form-group">
+            <label>材料清單 (直接貼上 WhatsApp 明細)</label>
+            <textarea id="materials" placeholder="在此直接貼上送貨明細...\n\n(橋B落料) 下路\n直杆2.0米 (有駁芯) =3碼\n..."></textarea>
+        </div>
+
+        <button class="btn" onclick="copyToWhatsApp()">一鍵複製內容</button>
+        <div class="notice">複製後即可直接貼上到群組</div>
+
+        <div class="preview-section">
+            <label style="font-size: 13px; color: #555; margin-bottom: 8px; display: block;">實時預覽：</label>
+            <div class="preview-bubble" id="previewBox"></div>
+        </div>
+    </div>
+
+    <script>
+        // 地盤與聯絡人資料庫 (根據截圖預設)
+        const siteDatabase = {
+            "中鐵-清水灣(租賃)": "傑 9207 1404 / 陽 6354 6598",
+            "智發-東涌42區[4-5座] (租賃)": "子建 5403 6365",
+            "智發-東涌42區[6座] (租賃)": "子建 5403 6365"
+        };
+
+        // DOM 元素
+        const els = {
+            date: document.getElementById('dateInput'),
+            time: document.getElementById('timeSlot'),
+            site: document.getElementById('siteSelect'),
+            customSite: document.getElementById('customSite'),
+            contact: document.getElementById('contactInfo'),
+            carNum: document.getElementById('carNum'),
+            plate: document.getElementById('plate'),
+            driver: document.getElementById('driver'),
+            materials: document.getElementById('materials'),
+            preview: document.getElementById('previewBox')
+        };
+
+        // 初始化日期為今天
+        els.date.valueAsDate = new Date();
+
+        // 格式化日期函數 (生成如: 23/07/2026[星期四])
+        function formatDate(dateStr) {
+            if (!dateStr) return "";
+            const d = new Date(dateStr);
+            const dd = String(d.getDate()).padStart(2, '0');
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const yyyy = d.getFullYear();
+            const days = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+            return `${dd}/${mm}/${yyyy}[${days[d.getDay()]}]`;
+        }
+
+        // 更新地盤聯絡人邏輯
+        function handleSiteChange() {
+            const selected = els.site.value;
+            if (selected === 'custom') {
+                els.customSite.style.display = 'block';
+                els.contact.value = '';
+            } else {
+                els.customSite.style.display = 'none';
+                els.contact.value = siteDatabase[selected] || '';
+            }
+            updatePreview();
+        }
+
+        // 生成最終排版文字
+        function generateMessage() {
+            const dateText = formatDate(els.date.value);
+            const timeText = els.time.value;
+            const siteText = els.site.value === 'custom' ? els.customSite.value : els.site.value;
+            
+            let msg = `日期： ${dateText} ${timeText}\n`;
+            msg += `地點： ${siteText} 第${els.carNum.value}車\n`;
+            msg += `車牌： ${els.plate.value}\n`;
+            msg += `司機： ${els.driver.value}\n`;
+            msg += `地盤聯絡人： ${els.contact.value}\n`;
+            msg += `車型： 30噸吊雞車\n`;
+            msg += `材料： 金屬鋼架\n\n\n`;
+            
+            const mats = els.materials.value.trim();
+            if (mats) {
+                msg += mats;
+            }
+
+            return msg;
+        }
+
+        // 更新預覽區
+        function updatePreview() {
+            els.preview.innerText = generateMessage();
+        }
+
+        // 綁定事件監聽，實現實時預覽
+        Object.values(els).forEach(el => {
+            if(el && el.tagName) {
+                el.addEventListener('input', updatePreview);
+                el.addEventListener('change', updatePreview);
+            }
+        });
+
+        // 獨立綁定地盤選擇事件
+        els.site.addEventListener('change', handleSiteChange);
+
+        // 一鍵複製功能
+        function copyToWhatsApp() {
+            const text = generateMessage();
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert("✅ 已成功複製，請前往 WhatsApp 貼上！");
+                }).catch(() => fallbackCopy(text));
+            } else {
+                fallbackCopy(text);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const ta = document.createElement("textarea");
+            ta.value = text;
+            ta.style.position = "fixed";
+            ta.style.opacity = 0;
+            document.body.appendChild(ta);
+            ta.select();
+            try {
+                document.execCommand('copy');
+                alert("✅ 已成功複製，請前往 WhatsApp 貼上！");
+            } catch (err) {
+                alert("請長按下方預覽區手動複製");
+            }
+            document.body.removeChild(ta);
+        }
+
+        // 初始執行一次以顯示預設畫面
+        handleSiteChange();
+    </script>
+</body>
+</html>
+"""
+
+with open("index.html", "w", encoding="utf-8") as f:
+    f.write(html_content)
+
+print("HTML file generated successfully.")
