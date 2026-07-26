@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>晉昌鋼架 - 送貨單生成器</title>
+    <style>
+        /* 網頁版控制面板樣式 */
+        body { font-family: "Microsoft JhengHei", Arial, sans-serif; background: #e9ecef; margin: 0; padding: 20px; }
+        .control-panel { max-width: 900px; margin: 0 auto 20px; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .control-panel h3 { margin-top: 0; color: #333; border-bottom: 2px solid #25D366; padding-bottom: 10px; }
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
+        .form-group { flex: 1; }
+        label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #555; }
+        input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        .btn { flex: 1; padding: 12px; font-size: 16px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; color: white; transition: 0.2s; }
+        .btn-gen { background: #25D366; }
+        .btn-gen:hover { background: #128C7E; }
+        .btn-print { background: #007bff; }
+        .btn-print:hover { background: #0056b3; }
+        
+        /* 送貨單 A4 預覽與列印樣式 */
+        .dn-container { max-width: 210mm; min-height: 297mm; margin: 0 auto; background: white; padding: 15mm 20mm; box-shadow: 0 0 10px rgba(0,0,0,0.2); box-sizing: border-box; color: #000; }
+        .header-logo { display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
+        .logo-shape { width: 50px; height: 50px; background: linear-gradient(135deg, #FFCC00 50%, #999 50%); margin-right: 15px; border: 2px solid #333; }
+        .header-text h1 { margin: 0; font-size: 32px; font-weight: 900; letter-spacing: 2px; }
+        .header-text h3 { margin: 0; font-size: 15px; font-weight: bold; letter-spacing: 0.5px; }
+        .dn-title { text-align: center; margin: 15px 0 25px; }
+        .dn-title h2 { margin: 0; font-size: 22px; letter-spacing: 5px; font-weight: 900; }
+        .dn-title span { font-size: 16px; font-weight: normal; letter-spacing: 1px; }
+        
+        .meta-table { width: 100%; font-size: 12px; margin-bottom: 15px; }
+        .meta-table td { padding: 4px 0; }
+        .meta-label { font-weight: 900; width: 15%; }
+        .meta-val { color: #00008B; font-weight: bold; width: 35%; }
+        .meta-label-right { font-weight: 900; width: 15%; text-align: right; padding-right: 10px; }
+        .meta-val-right { color: #00008B; font-weight: bold; width: 35%; text-align: right; }
+        
+        .item-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+        .item-table th, .item-table td { padding: 6px 4px; text-align: center; }
+        .item-table th { border-top: 2px solid black; border-bottom: 1px solid black; font-weight: 900; }
+        .item-table tbody td { color: #00008B; font-weight: bold; }
+        .item-table td.desc-col { text-align: left; }
+        .item-table tfoot td { border-top: 1px solid black; border-bottom: 2px solid black; font-weight: 900; }
+        
+        .footer-terms { font-size: 11px; margin-top: 30px; line-height: 1.5; }
+        .footer-terms .blue-note { color: #00008B; text-align: center; font-weight: bold; margin-bottom: 20px; }
+        .footer-terms .black-note { font-weight: 900; text-align: justify; }
+        
+        .signatures { display: flex; justify-content: space-between; margin-top: 60px; font-size: 12px; font-weight: 900; }
+        .sig-box { width: 45%; text-align: center; border-top: 1px solid black; padding-top: 8px; }
+        .footer-address { margin-top: 40px; font-size: 11px; text-align: center; font-weight: 900; }
+
+        /* 列印模式：隱藏控制面板，移除邊界 */
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; margin: 0; padding: 0; }
+            .dn-container { box-shadow: none; max-width: 100%; padding: 10mm; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 控制面板 (列印時會隱藏) -->
+    <div class="control-panel no-print">
+        <h3>⚙️ 送貨單生成器設定</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label>快捷填入地盤資料:</label>
+                <select id="sitePreset" onchange="applyPreset()">
+                    <option value="">-- 手動輸入 --</option>
+                    <option value="TC42-6">東涌42區-6座</option>
+                    <option value="TC42-45">東涌42區[4-5座]</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>日期 Date:</label>
+                <input type="date" id="i-date">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>客戶名稱 Client:</label><input type="text" id="i-client" value="智發建築工程有限公司"></div>
+            <div class="form-group"><label>收貨單單號:</label><input type="text" id="i-dnno" value="CF-TC42(B6)-SR-DN35"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>地址 Address:</label><input type="text" id="i-address" value="香港九龍塘窩打老道155號"></div>
+            <div class="form-group"><label>運輸車牌:</label><input type="text" id="i-plate" value="LV538"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>送貨地盤地址:</label><input type="text" id="i-site" value="東涌42區-6座"></div>
+            <div class="form-group"><label>合約編號:</label><input type="text" id="i-contract" value="QUOT-CF-TC42"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>聯絡人:</label><input type="text" id="i-contact" value="東涌42區-6座 余生 9792 7157"></div>
+        </div>
+        <div class="form-group">
+            <label>📝 貼上 WhatsApp 材料清單 (系統會自動抓取 APS 編號與數量):</label>
+            <textarea id="rawInput" rows="5" placeholder="例如：二环有心(APS1000S)：123支； 四环有心-APS2000S：161支..."></textarea>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-gen" onclick="generateDN()">⬇️ 生成送貨單預覽</button>
+            <button class="btn btn-print" onclick="printDN()">🖨️ 列印 / 儲存為 PDF (並記憶單號)</button>
+        </div>
+    </div>
+
+    <!-- 正式送貨單版面 (完美復刻 PDF) -->
+    <div class="dn-container" id="printableArea">
+        <div class="header-logo">
+            <div class="logo-shape"></div>
+            <div class="header-text">
+                <h1>晉昌鋼架工程有限公司</h1>
+                <h3>Advance Prosperity Scaffold Engineering Limited</h3>
+            </div>
+        </div>
+        <div class="dn-title">
+            <h2>送貨單</h2>
+            <span>Delivery Note</span>
+        </div>
+
+        <table class="meta-table">
+            <tr>
+                <td class="meta-label">客戶名稱 Client :</td><td class="meta-val" id="out-client">智發建築工程有限公司</td>
+                <td class="meta-label-right">收貨單單號 :</td><td class="meta-val-right" id="out-dnno">CF-TC42(B6)-SR-DN35</td>
+            </tr>
+            <tr>
+                <td class="meta-label">地址 Address :</td><td class="meta-val" id="out-address">香港九龍塘窩打老道155號</td>
+                <td class="meta-label-right">運輸車牌 :</td><td class="meta-val-right" id="out-plate">LV538</td>
+            </tr>
+            <tr>
+                <td class="meta-label">送貨地盤地址 :</td><td class="meta-val" id="out-site">東涌42區-6座</td>
+                <td class="meta-label-right">日期 Date :</td><td class="meta-val-right" id="out-date">2026-07-24</td>
+            </tr>
+            <tr>
+                <td class="meta-label">聯絡人 :</td><td class="meta-val" id="out-contact">東涌42區-6座 余生 9792 7157</td>
+                <td class="meta-label-right">合約編號 :</td><td class="meta-val-right" id="out-contract">QUOT-CF-TC42</td>
+            </tr>
+        </table>
+
+        <table class="item-table">
+            <thead>
+                <tr>
+                    <th style="width: 5%;">序</th>
+                    <th style="width: 15%;">APS 編號</th>
+                    <th style="width: 35%; text-align: left;">Description 规格描述</th>
+                    <th style="width: 10%;">件重</th>
+                    <th style="width: 10%;">數量 Quantity</th>
+                    <th style="width: 12%;">重量(KG)</th>
+                    <th style="width: 13%;">備注 Remark</th>
+                </tr>
+            </thead>
+            <tbody id="out-items">
+                <!-- 系統自動生成的材料行將出現在這裡 -->
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="4" style="text-align: right; padding-right: 20px;">總數:</td>
+                    <td id="out-total-qty">0</td>
+                    <td id="out-total-weight">0.00</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="footer-terms">
+            <div class="blue-note">*以上為送貨架組成的單件，其中送貨架租金和其費用將會以單件計算</div>
+            <div class="black-note">茲證明上列鋼架及配件品質, 數量均已清楚檢驗合格及簽收確認, 如回收貨品出現損毀/割斷/遺失, 而未能於地盤即時點算發現, 出租方有權自行點算後作出“實報實銷”</div>
+        </div>
+
+        <div class="signatures">
+            <div class="sig-box">簽收 Accepted and Confirmed by</div>
+            <div class="sig-box">Advance Prosperity Scaffold Engineering Limited</div>
+        </div>
+        
+        <div class="footer-address">
+            地址: 新界葵芳興芳路223號新都會廣場二座23樓05室 郵件查詢 : apseltdd@gmail.com 電話: 蘇先生 (Kenneth So) 66885076
+        </div>
+    </div>
+
+    <script>
+        // 📊 內建 Excel 數據庫 (對齊名稱與單件重量)
+        const db = {
+            "APS500": { desc: "直桿 Standard 500", weight: 2.3 },
+            "APS1000": { desc: "直桿 Standard 1000", weight: 4.6 },
+            "APS1500": { desc: "直桿 Standard 1500", weight: 6.9 },
+            "APS2000": { desc: "直桿 Standard 2000", weight: 9.2 },
+            "APS2500": { desc: "直桿 Standard 2500", weight: 11.5 },
+            "APS3000": { desc: "直桿 Standard 3000", weight: 13.8 },
+            "APS500S": { desc: "直桿 Standard 500 w/ 帶駁芯", weight: 3.0 },
+            "APS1000S": { desc: "直桿 Standard 1000 w/ 帶駁芯", weight: 5.3 },
+            "APS1500S": { desc: "直桿 Standard 1500 w/ 帶駁芯", weight: 7.6 },
+            "APS2000S": { desc: "直桿 Standard 2000 w/ 帶駁芯", weight: 9.9 },
+            "APS2500S": { desc: "直桿 Standard 2500 w/ 帶駁芯", weight: 12.2 },
+            "APS3000S": { desc: "直桿 Standard 3000 w/ 帶駁芯", weight: 14.5 },
+            "APS300L": { desc: "橫桿 Ledger 300", weight: 1.6 },
+            "APS600L": { desc: "橫桿 Ledger 600", weight: 2.8 },
+            "APS700L": { desc: "橫桿 Ledger 700", weight: 2.9 },
+            "APS900L": { desc: "橫桿 Ledger 900", weight: 4.0 },
+            "APS1200L": { desc: "橫桿 Ledger 1200", weight: 4.9 },
+            "APS1500L": { desc: "橫桿 Ledger 1500", weight: 6.34 },
+            "APS1800L": { desc: "橫桿 Ledger 1800", weight: 7.51 },
+            "APS2400L": { desc: "橫桿 Ledger 2400", weight: 9.85 },
+            "APS0610D": { desc: "斜桿Diagonal Bracing 600*1000", weight: 4.9 },
+            "APS0910D": { desc: "斜桿Diagonal Bracing 900*1000", weight: 4.8 },
+            "APS1210D": { desc: "斜桿Diagonal Bracing 1200*1000", weight: 5.2 },
+            "APS1510D": { desc: "斜桿Diagonal Bracing 1500*1000", weight: 5.9 },
+            "APS1810D": { desc: "斜桿Diagonal Bracing 1800*1000", weight: 6.9 },
+            "APS0615D": { desc: "斜桿Diagonal Bracing 600*1500", weight: 5.5 },
+            "APS0915D": { desc: "斜桿Diagonal Bracing 900*1500", weight: 5.77 },
+            "APS1215D": { desc: "斜桿Diagonal Bracing 1200*1500", weight: 6.16 },
+            "APS1515D": { desc: "斜桿Diagonal Bracing 1500*1500", weight: 6.57 },
+            "APS1815D": { desc: "斜桿Diagonal Bracing 1800*1500", weight: 7.3 },
+            "APS0620D": { desc: "斜桿Diagonal Bracing 600*2000", weight: 6.57 },
+            "APS0920D": { desc: "斜桿Diagonal Bracing 900*2000", weight: 7.0 },
+            "APS1220D": { desc: "斜桿Diagonal Bracing 1200*2000", weight: 7.26 },
+            "APS1820D": { desc: "斜桿Diagonal Bracing 1800*2000", weight: 8.26 },
+            "APS300UJ": { desc: "頂積 300 Head Jack", weight: 4.0 },
+            "APS-UJ": { desc: "頂積 Head Jack", weight: 4.5 },
+            "APS-BJ": { desc: "底積 Base Jack", weight: 4.2 },
+            "APS200BC": { desc: "腳套Base Collar 200", weight: 2.0 },
+            "APS4024SB": { desc: "橋板 S.Plank 4000 x 240 x 45D", weight: 12.0 },
+            "APS270SS": { desc: "駁芯 連 羅絲 Connector", weight: 0.78 },
+            "APS600CW": { desc: "鉤板 Catwalk 450mm(W) x 600mm(L) x 45mm(D)", weight: 2.8 },
+            "APS900CW": { desc: "鉤板 Catwalk 450mm(W) x 900mm(L) x 45mm(D)", weight: 4.2 },
+            "APS1200CW": { desc: "鉤板 Catwalk 450mm(W) x 1200mm(L) x 45mm(D)", weight: 5.5 },
+            "APS1800CW": { desc: "鉤板 Catwalk 450mm(W) x 1800mm(L) x 45mm(D)", weight: 7.5 },
+            "APS600TB": { desc: "踢腳板 TOE Board 600 x 200 x 24D", weight: 2.36 },
+            "APS900TB": { desc: "踢腳板 TOE Board 900 x 200 x 24D", weight: 3.05 },
+            "APS1200TB": { desc: "踢腳板 TOE Board 1200 x 200 x 24D", weight: 4.2 },
+            "APS1800TB": { desc: "踢腳板 TOE Board 1800 x 200 x 24D", weight: 5.15 },
+            "APS1820HS": { desc: "鉤樓梯 Stair Hooked 1800X2000X550W", weight: 29.5 },
+            "APS1815HS": { desc: "鉤樓梯 Stair Hooked 1800X1500X550W", weight: 23.0 },
+            "APS1215HS": { desc: "鉤樓梯 Stair Hooked 1200X1500X750W", weight: 22.5 },
+            "APS20CS": { desc: "直鉤樓梯 Stair Hooked 2000mm", weight: 15.0 },
+            "APS3000ST": { desc: "鐵通 - Steel Tube 3000", weight: 4.1 },
+            "APS6000ST": { desc: "鐵通 - Steel Tube 6000", weight: 8.25 },
+            "APSCOUPLER": { desc: "手扣 - 大細扣 Coupler", weight: 2.0 },
+            "APSCOUPLER-H": { desc: "手扣 - 工字扣 Coupler", weight: 2.0 },
+            "APSWT": { desc: "連牆器 Wall Tie", weight: 1.0 },
+            "APS600AB": { desc: "九比架 Angle Bracket 600", weight: 6.5 },
+            "APS300AB": { desc: "九比架 Angle Bracket 300", weight: 4.9 },
+            "APS1290RA": { desc: "打包架A : Stand 1000*4 Leger 1200*4 900*4 Base Collar *4", weight: 0 },
+            "APS9090RB": { desc: "打包架B : Stand 1000*4 Leger 900*8  Base Collar *4", weight: 0 },
+            "APS9060RC": { desc: "打包架C : Stand 1000*4 Leger 900*4 600*4 Base Collar *4", weight: 0 },
+            "APS9070RD": { desc: "打包架D : Stand 900*4 Ledger 900*4 700*4 Base Collar *4", weight: 0 },
+            "APS6060RE": { desc: "打包架E : Stand 1000*4 Ledger 600*8  Base Collar *4", weight: 0 }
+        };
+
+        // 地盤快捷設定 (帶有 DN 前綴，方便自動+1)
+        const presets = {
+            "TC42-6": {
+                client: "智發建築工程有限公司", address: "香港九龍塘窩打老道155號",
+                site: "東涌42區-6座", contact: "東涌42區-6座 余生 9792 7157",
+                contract: "QUOT-CF-TC42", dnPrefix: "CF-TC42(B6)-SR-DN"
+            },
+            "TC42-45": {
+                client: "智發建築工程有限公司", address: "香港九龍塘窩打老道155號",
+                site: "東涌42區[4-5座]", contact: "東涌42區[4-5座] 子建 5403 6365",
+                contract: "QUOT-CF-TC42", dnPrefix: "CF-TC42(B45)-SR-DN"
+            }
+        };
+
+        // 初始化日期為當天
+        document.getElementById('i-date').valueAsDate = new Date();
+
+        // 選擇地盤並讀取 DN 單號記憶
+        function applyPreset() {
+            const val = document.getElementById('sitePreset').value;
+            if(val && presets[val]) {
+                document.getElementById('i-client').value = presets[val].client;
+                document.getElementById('i-address').value = presets[val].address;
+                document.getElementById('i-site').value = presets[val].site;
+                document.getElementById('i-contact').value = presets[val].contact;
+                document.getElementById('i-contract').value = presets[val].contract;
+                
+                // 讀取該地盤上一次的單號記憶
+                let dnBase = presets[val].dnPrefix;
+                const lastNum = localStorage.getItem('dn_num_' + val);
+                if (lastNum) {
+                    document.getElementById('i-dnno').value = dnBase + (parseInt(lastNum, 10) + 1);
+                } else {
+                    document.getElementById('i-dnno').value = dnBase + "1"; 
+                }
+            }
+        }
+
+        // 🚀 核心功能：解析文字並生成表單
+        function generateDN() {
+            // 1. 同步表頭資料
+            document.getElementById('out-client').innerText = document.getElementById('i-client').value;
+            document.getElementById('out-address').innerText = document.getElementById('i-address').value;
+            document.getElementById('out-site').innerText = document.getElementById('i-site').value;
+            document.getElementById('out-contact').innerText = document.getElementById('i-contact').value;
+            document.getElementById('out-contract').innerText = document.getElementById('i-contract').value;
+            document.getElementById('out-dnno').innerText = document.getElementById('i-dnno').value;
+            document.getElementById('out-plate').innerText = document.getElementById('i-plate').value;
+            document.getElementById('out-date').innerText = document.getElementById('i-date').value;
+
+            // 2. 智能解析材料文字
+            const raw = document.getElementById('rawInput').value;
+            const segments = raw.split(/;|；|。|\n/);
+            const itemMap = {};
+            
+            segments.forEach(seg => {
+                // 尋找 APS 編號
+                const codeMatch = seg.match(/(APS[A-Z0-9\-]+)/i);
+                if(codeMatch) {
+                    const code = codeMatch[1].toUpperCase();
+                    let qty = 0;
+                    
+                    // 策略A：找帶有「支/件/個/碼/架」單位的數字
+                    const qtyMatch1 = seg.match(/(\d+)\s*(支|件|個|碼|架)/);
+                    if (qtyMatch1) {
+                        qty = parseInt(qtyMatch1[1], 10);
+                    } else {
+                        // 策略B：如果沒單位，直接找該段落的「最後一個數字」
+                        const nums = seg.match(/(\d+)/g);
+                        if(nums) qty = parseInt(nums[nums.length - 1], 10);
+                    }
+                    
+                    if(qty > 0) {
+                        itemMap[code] = (itemMap[code] || 0) + qty;
+                    }
+                }
+            });
+
+            // 3. 生成表格與計算重量
+            let html = '';
+            let totalQty = 0;
+            let totalWeight = 0;
+            let index = 1;
+
+            for(let code in itemMap) {
+                const qty = itemMap[code];
+                const info = db[code] || { desc: "未登錄型號 (請確認編號)", weight: 0 };
+                const weightTotal = qty * info.weight;
+                
+                html += `<tr>
+                    <td>${index++}</td>
+                    <td>${code}</td>
+                    <td class="desc-col">${info.desc}</td>
+                    <td>${info.weight > 0 ? info.weight.toFixed(2) : '-'}</td>
+                    <td>${qty}</td>
+                    <td>${weightTotal > 0 ? weightTotal.toFixed(2) : '-'}</td>
+                    <td></td>
+                </tr>`;
+                
+                totalQty += qty;
+                totalWeight += weightTotal;
+            }
+
+            document.getElementById('out-items').innerHTML = html;
+            document.getElementById('out-total-qty').innerText = totalQty;
+            document.getElementById('out-total-weight').innerText = totalWeight.toFixed(2);
+        }
+
+        // 🖨️ 列印並記憶單號
+        function printDN() {
+            generateDN(); // 確保資料是最新的
+            const val = document.getElementById('sitePreset').value;
+            if(val) {
+                const currentDN = document.getElementById('i-dnno').value;
+                // 抓取單號最後面的數字
+                const match = currentDN.match(/(\d+)$/);
+                if(match) {
+                    localStorage.setItem('dn_num_' + val, match[1]);
+                }
+            }
+            // 呼叫系統列印 (另存 PDF)
+            window.print();
+        }
+    </script>
+</body>
+</html>
