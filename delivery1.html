@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>晉昌鋼架 - 送貨單生成器</title>
+    <title>晉昌鋼架 - 送貨單</title>
     
     <style>
         /* 網頁版控制面板樣式 */
@@ -50,7 +50,6 @@
         }
         
         /* 表頭 Logo 與標題區塊 */
-        /* 微調：縮短 Logo 與標題的距離 */
         .header-section { display: flex; justify-content: center; margin-bottom: 5px; }
         .header-logo { height: 75px; object-fit: contain; }
         
@@ -59,23 +58,23 @@
         .doc-title-wrapper .en { font-size: 16px; font-weight: normal; letter-spacing: 1px; }
 
         /* 元數據表格 */
-        .meta-table { width: 100%; font-size: 12px; margin-bottom: 15px; border-collapse: collapse; }
+        .meta-table { width: 100%; font-size: 12px; margin-bottom: 15px; border-collapse: collapse; letter-spacing: -0.2px; }
         .meta-table td { padding: 4px 0; vertical-align: middle; } 
         .meta-label { font-weight: bold; width: 14%; white-space: nowrap; }
-        .meta-val { color: #00008B; width: 36%; padding-right: 10px; }
+        .meta-val { color: #00008B; width: 36%; padding-right: 10px; font-weight: bold; }
         .meta-label-right { font-weight: bold; width: 14%; text-align: left; padding-left: 10px; white-space: nowrap; }
-        .meta-val-right { color: #00008B; width: 36%; text-align: right; }
+        .meta-val-right { color: #00008B; width: 36%; text-align: right; font-weight: bold; }
         
-        /* 統一主表格 */
-        .dn-main-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
-        .dn-main-table th, .dn-main-table td { padding: 6px 2px; text-align: center; word-wrap: break-word; } 
+        /* 統一主表格：整體加入字距壓縮 */
+        .dn-main-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; letter-spacing: -0.2px; }
+        .dn-main-table th, .dn-main-table td { padding: 5px 2px; text-align: center; word-wrap: break-word; } 
         
         /* 標題列 */
         .dn-main-table th { border-top: 2px solid black; border-bottom: 1px solid black; font-weight: bold; }
         
         /* 內容數據列 */
-        .dn-main-table tbody.data-rows td { color: #00008B; }
-        .dn-main-table td.desc-col { text-align: left; padding-left: 5px; } /* 確保左側與標題對齊 */
+        .dn-main-table tbody.data-rows td { color: #00008B; font-weight: bold; }
+        .dn-main-table td.desc-col { text-align: left; padding-left: 5px; } 
         
         /* 分隔線 */
         .dn-main-table tbody.sep-row td { border-top: 1px dashed #999; padding: 0; height: 10px; }
@@ -83,21 +82,26 @@
         /* 總數計價列 */
         .dn-main-table tbody.total-row td { border-top: 1px solid black; border-bottom: 2px solid black; font-weight: bold; padding: 8px 0; color: #000; }
         
-        /* 打包架專用列 */
-        .dn-main-table tbody.rack-rows td { color: #00008B; padding: 4px 2px; font-weight: normal; vertical-align: top;}
-        /* 微調：打包架描述文字縮減行距、加粗、向左對齊 */
-        .dn-main-table tbody.rack-rows td.desc-col { font-weight: bold; line-height: 1.2; text-align: left; padding-left: 5px; }
+        /* 🌟 打包架專用列：強制縮小、不換行、更緊湊的字距 🌟 */
+        .dn-main-table tbody.rack-rows td { color: #00008B; padding: 3px 2px; font-weight: bold; vertical-align: middle; }
+        .dn-main-table tbody.rack-rows td.desc-col { 
+            font-size: 10.5px;         /* 縮小字體 */
+            letter-spacing: -0.5px;    /* 壓縮文字間距 */
+            white-space: nowrap;       /* 強制一行顯示 */
+            text-align: left; 
+            padding-left: 5px; 
+        }
 
         /* 藍色提示字 */
-        .blue-note { text-align: center; color: #00008B; font-weight: bold; font-size: 11px; margin-top: 8px; margin-bottom: 15px; }
+        .blue-note { text-align: center; color: #00008B; font-weight: bold; font-size: 11px; margin-top: 8px; margin-bottom: 15px; letter-spacing: -0.2px; }
 
         /* 底部條款與簽名區 */
-        .black-terms { font-size: 10.5px; font-weight: bold; text-align: justify; line-height: 1.5; margin-bottom: 30px; }
+        .black-terms { font-size: 10.5px; font-weight: bold; text-align: justify; line-height: 1.5; margin-bottom: 30px; letter-spacing: -0.2px; }
         
-        .signatures { display: flex; justify-content: space-between; font-size: 13px; font-weight: normal; margin-bottom: 15px;}
+        .signatures { display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; margin-bottom: 15px;}
         .sig-box { width: 40%; text-align: center; border-top: 1px solid black; padding-top: 8px; }
         
-        .footer-address { font-size: 10px; text-align: center; font-weight: bold; }
+        .footer-address { font-size: 10px; text-align: center; font-weight: bold; letter-spacing: -0.2px; }
 
         /* 🖨️ 完美列印模式 */
         @page {
@@ -207,7 +211,7 @@
         
         <div class="btn-group">
             <button class="btn btn-gen" onclick="generateDN()">⬇️ 1. 生成送貨單預覽</button>
-            <button class="btn btn-print" onclick="printDN()">🖨️ 2. 列印成 PDF (與圖二排版完全一致)</button>
+            <button class="btn btn-print" onclick="printDN()">🖨️ 2. 列印成 PDF</button>
         </div>
     </div>
 
@@ -250,11 +254,11 @@
                 <colgroup>
                     <col style="width: 5%;">  <!-- 序 -->
                     <col style="width: 15%;"> <!-- APS 編號 -->
-                    <col style="width: 35%;"> <!-- Description -->
+                    <col style="width: 37%;"> <!-- Description -->
                     <col style="width: 10%;"> <!-- 件重 -->
                     <col style="width: 11%;"> <!-- 數量 Quantity -->
-                    <col style="width: 12%;"> <!-- 重量(KG) -->
-                    <col style="width: 12%;"> <!-- 備注 -->
+                    <col style="width: 11%;"> <!-- 重量(KG) -->
+                    <col style="width: 11%;"> <!-- 備注 -->
                 </colgroup>
                 
                 <thead>
@@ -375,13 +379,13 @@
             "APS300AB": { desc: "九比架 Angle Bracket 300", weight: 4.9 }
         };
 
-        // 🌟 移除了 "打包架 A/B/C/D/E:" 文字 🌟
+        // 🌟 徹底移除所有 <br>，強制單行顯示 🌟
         const rackConfigs = [
-            { code: "APS1290RA", desc: "直桿 1000*4 - 橫桿 1200*4 900*4 -<br>腳套 200 *4" },
-            { code: "APS9090RB", desc: "直桿 1000*4 - 橫桿 900*8 - 腳套<br>200 *4" },
-            { code: "APS9060RC", desc: "直桿 1000*4 - 橫桿 900*4 600*4 -<br>腳套 200 *4" },
-            { code: "APS9070RD", desc: "直桿 1000*4 - 橫桿 900*4 700*4 -<br>腳套 200 *4" },
-            { code: "APS6060RE", desc: "直桿 1000*4 - 橫桿 600*8 - 腳套<br>200 *4" }
+            { code: "APS1290RA", desc: "直桿 1000*4 - 橫桿 1200*4 900*4 - 腳套 200 *4" },
+            { code: "APS9090RB", desc: "直桿 1000*4 - 橫桿 900*8 - 腳套 200 *4" },
+            { code: "APS9060RC", desc: "直桿 1000*4 - 橫桿 900*4 600*4 - 腳套 200 *4" },
+            { code: "APS9070RD", desc: "直桿 1000*4 - 橫桿 900*4 700*4 - 腳套 200 *4" },
+            { code: "APS6060RE", desc: "直桿 1000*4 - 橫桿 600*8 - 腳套 200 *4" }
         ];
 
         const rackCompositions = {
@@ -465,6 +469,11 @@
             document.getElementById('out-contract').innerText = document.getElementById('i-contract').value;
             document.getElementById('out-dnno').innerText = document.getElementById('i-dnno').value;
             document.getElementById('out-date').innerText = document.getElementById('i-date').value;
+            
+            // 🌟 動態設定網頁標題，確保 PDF 儲存名稱正確 🌟
+            const siteName = document.getElementById('i-site').value.trim();
+            const dnDate = document.getElementById('i-date').value.trim();
+            document.title = `${siteName} ${dnDate}`;
             
             let plateVal = document.getElementById('i-plate').value;
             if (plateVal === 'custom') plateVal = document.getElementById('customPlate').value;
@@ -597,7 +606,7 @@
             generateDN();
             saveDNState();
             
-            // 延遲 300 毫秒，等瀏覽器畫面更新後才呼叫列印，解決列印白紙問題
+            // 延遲 300 毫秒，等瀏覽器畫面更新後才呼叫列印
             setTimeout(function() {
                 window.print();
             }, 300);
