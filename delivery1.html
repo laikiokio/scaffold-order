@@ -13,7 +13,7 @@
         .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
         .form-group { flex: 1; }
         label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #555; }
-        input[type="text"], input[type="date"], select, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
+        input[type="text"], input[type="date"], select, textarea, input[type="number"] { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
         
         .rack-input-section { background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #d1d5db; }
         .rack-input-section .rack-title { color: #d97706; font-size: 15px; margin-bottom: 10px; border-bottom: none; padding-bottom: 0; margin-top: 0; }
@@ -85,9 +85,9 @@
         /* 🌟 打包架專用列：強制縮小、不換行、更緊湊的字距 🌟 */
         .dn-main-table tbody.rack-rows td { color: #00008B; padding: 3px 2px; font-weight: bold; vertical-align: middle; }
         .dn-main-table tbody.rack-rows td.desc-col { 
-            font-size: 10.5px;         /* 縮小字體 */
-            letter-spacing: -0.5px;    /* 壓縮文字間距 */
-            white-space: nowrap;       /* 強制一行顯示 */
+            font-size: 10.5px;         
+            letter-spacing: -0.5px;    
+            white-space: nowrap;       
             text-align: left; 
             padding-left: 5px; 
         }
@@ -158,7 +158,16 @@
         </div>
         <div class="form-row">
             <div class="form-group"><label>客戶名稱 Client:</label><input type="text" id="i-client" value="智發建築工程有限公司"></div>
-            <div class="form-group"><label>收貨單單號:</label><input type="text" id="i-dnno" value="CF-TC42(B6)-SR-DN35"></div>
+            
+            <!-- 🌟 拆分的收貨單單號輸入區 (前綴 + 車數) 🌟 -->
+            <div class="form-group">
+                <label>收貨單單號 (前綴 + 車數):</label>
+                <div style="display: flex; gap: 5px;">
+                    <input type="text" id="i-dnprefix" value="CF-TC42(B6)-SR-DN" style="flex: 2;">
+                    <input type="number" id="i-carnum" value="35" min="1" style="flex: 1; text-align: center; color: #00008B; font-weight: bold;">
+                </div>
+                <span id="carNumHint" style="font-size: 11px; color: #d97706; display: none; margin-top: 4px;"></span>
+            </div>
         </div>
         
         <div class="form-row">
@@ -211,7 +220,7 @@
         
         <div class="btn-group">
             <button class="btn btn-gen" onclick="generateDN()">⬇️ 1. 生成送貨單預覽</button>
-            <button class="btn btn-print" onclick="printDN()">🖨️ 2. 列印成 PDF</button>
+            <button class="btn btn-print" onclick="printDN()">🖨️ 2. 列印成 PDF (並自動記憶車數)</button>
         </div>
     </div>
 
@@ -379,7 +388,6 @@
             "APS300AB": { desc: "九比架 Angle Bracket 300", weight: 4.9 }
         };
 
-        // 🌟 徹底移除所有 <br>，強制單行顯示 🌟
         const rackConfigs = [
             { code: "APS1290RA", desc: "直桿 1000*4 - 橫桿 1200*4 900*4 - 腳套 200 *4" },
             { code: "APS9090RB", desc: "直桿 1000*4 - 橫桿 900*8 - 腳套 200 *4" },
@@ -429,6 +437,7 @@
             }
         }
 
+        // 🌟 讀取地盤資料並自動 +1 車數邏輯 🌟
         function applyPreset() {
             const val = document.getElementById('sitePreset').value;
             if(val && presets[val]) {
@@ -440,24 +449,28 @@
                 document.getElementById('i-plate').value = presets[val].plate;
                 handlePlateChange();
                 
-                let dnBase = presets[val].dnPrefix;
+                // 處理前綴與車數
+                document.getElementById('i-dnprefix').value = presets[val].dnPrefix;
                 const lastNum = localStorage.getItem('dn_num_' + val);
+                const hintEl = document.getElementById('carNumHint');
+                
                 if (lastNum) {
-                    document.getElementById('i-dnno').value = dnBase + (parseInt(lastNum, 10) + 1);
+                    document.getElementById('i-carnum').value = parseInt(lastNum, 10) + 1;
+                    hintEl.innerText = `上車為 ${lastNum}，已自動+1`;
+                    hintEl.style.display = 'block';
                 } else {
-                    document.getElementById('i-dnno').value = dnBase + "1"; 
+                    document.getElementById('i-carnum').value = 1; 
+                    hintEl.style.display = 'none';
                 }
             }
         }
 
+        // 🌟 儲存當前車數記憶 🌟
         function saveDNState() {
             const val = document.getElementById('sitePreset').value;
             if(val) {
-                const currentDN = document.getElementById('i-dnno').value;
-                const match = currentDN.match(/(\d+)$/);
-                if(match) {
-                    localStorage.setItem('dn_num_' + val, match[1]);
-                }
+                const currentCarNum = document.getElementById('i-carnum').value;
+                localStorage.setItem('dn_num_' + val, currentCarNum);
             }
         }
 
@@ -467,10 +480,12 @@
             document.getElementById('out-site').innerText = document.getElementById('i-site').value;
             document.getElementById('out-contact').innerText = document.getElementById('i-contact').value;
             document.getElementById('out-contract').innerText = document.getElementById('i-contract').value;
-            document.getElementById('out-dnno').innerText = document.getElementById('i-dnno').value;
             document.getElementById('out-date').innerText = document.getElementById('i-date').value;
             
-            // 🌟 動態設定網頁標題，確保 PDF 儲存名稱正確 🌟
+            // 🌟 組合前綴 + 車數，並寫入預覽畫面 🌟
+            const fullDnNo = document.getElementById('i-dnprefix').value + document.getElementById('i-carnum').value;
+            document.getElementById('out-dnno').innerText = fullDnNo;
+            
             const siteName = document.getElementById('i-site').value.trim();
             const dnDate = document.getElementById('i-date').value.trim();
             document.title = `${siteName} ${dnDate}`;
@@ -602,11 +617,17 @@
         }
 
         function printDN() {
-            // 先保證數據更新
             generateDN();
             saveDNState();
             
-            // 延遲 300 毫秒，等瀏覽器畫面更新後才呼叫列印
+            // 延遲更新車數提示，讓使用者知道已經存檔
+            const val = document.getElementById('sitePreset').value;
+            if(val) {
+                const hintEl = document.getElementById('carNumHint');
+                hintEl.innerText = `已儲存紀錄為第 ${document.getElementById('i-carnum').value} 車`;
+                hintEl.style.display = 'block';
+            }
+
             setTimeout(function() {
                 window.print();
             }, 300);
