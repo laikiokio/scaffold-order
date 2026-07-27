@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>晉昌鋼架 - 送貨單生成器</title>
-    <!-- 引入 html2pdf.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
         /* 網頁版控制面板樣式 (列印時隱藏) */
@@ -22,43 +20,38 @@
         .rack-input-section .form-group label { font-size: 11px; color: #4b5563; }
         .rack-input-section input[type="number"] { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; text-align: center; font-weight: bold; font-size: 16px; color: #00008B; }
 
-        .btn-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
-        .btn { flex: 1; min-width: 200px; padding: 12px; font-size: 15px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; color: white; transition: 0.2s; }
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        .btn { flex: 1; padding: 12px; font-size: 16px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; color: white; transition: 0.2s; text-align: center; }
         .btn-gen { background: #25D366; }
         .btn-gen:hover { background: #128C7E; }
         .btn-print { background: #007bff; }
         .btn-print:hover { background: #0056b3; }
-        .btn-pdf { background: #8e44ad; } 
-        .btn-pdf:hover { background: #732d91; }
         
-        /* 預覽外框，讓手機可以左右滑動看完整 A4 */
+        /* 預覽外框 */
         .dn-preview-wrapper {
             width: 100%;
             overflow-x: auto;
-            background: #525659; /* 深色背景襯托白紙 */
+            background: #525659; 
             padding: 20px 0;
             border-radius: 8px;
         }
 
-        /* 🌟 送貨單 A4 實體樣式 (精準像素鎖定) 🌟 */
+        /* 🌟 送貨單 A4 實體樣式 (預覽) 🌟 */
         .dn-container { 
-            width: 794px;      /* 強制設定為 A4 寬度像素 (210mm @ 96dpi) */
-            min-height: 1122px; /* 強制設定為 A4 高度像素 (297mm @ 96dpi) */
+            width: 794px;      /* A4 寬度 */
+            min-height: 1122px; /* A4 高度 */
             margin: 0 auto; 
             background: white; 
-            padding: 40px 50px; /* 留出美觀的白邊 */
+            padding: 40px 50px; 
             box-shadow: 0 0 10px rgba(0,0,0,0.5); 
             box-sizing: border-box; 
             color: #000; 
             -webkit-text-size-adjust: 100%;
         }
         
-        /* 表頭 Logo 與標題區塊 */
-        .header-section { display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
-        .header-logo { height: 60px; margin-right: 15px; }
-        .header-text-block { text-align: left; }
-        .header-text-block .company-zh { font-size: 28px; font-weight: 900; letter-spacing: 2px; margin-bottom: 2px; }
-        .header-text-block .company-en { font-size: 13px; font-weight: bold; font-family: Arial, sans-serif; }
+        /* 表頭 Logo 與標題區塊 (已移除多餘文字，只顯示完整 Logo 圖片) */
+        .header-section { display: flex; justify-content: center; margin-bottom: 15px; }
+        .header-logo { height: 75px; object-fit: contain; }
         
         .doc-title-wrapper { text-align: center; margin-bottom: 15px; }
         .doc-title-wrapper .zh { font-size: 22px; font-weight: 900; letter-spacing: 8px; }
@@ -72,7 +65,7 @@
         .meta-label-right { font-weight: bold; width: 14%; text-align: left; padding-left: 10px; white-space: nowrap; }
         .meta-val-right { color: #00008B; width: 36%; text-align: right; }
         
-        /* 🌟 統一主表格 (散裝 + 底座 + 總數 + 打包架) 🌟 */
+        /* 統一主表格 */
         .dn-main-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
         .dn-main-table th, .dn-main-table td { padding: 6px 2px; text-align: center; word-wrap: break-word; } 
         
@@ -104,12 +97,31 @@
         
         .footer-address { font-size: 10px; text-align: center; font-weight: bold; }
 
-        /* 列印模式 */
+        /* 🖨️ 完美列印模式 (與網頁預覽 100% 一致，強制一頁 A4) 🖨️ */
+        @page {
+            size: A4 portrait;
+            margin: 0mm; /* 由 dn-container 控制內距 */
+        }
         @media print {
             .no-print { display: none !important; }
-            body { background: white; margin: 0; padding: 0; }
-            .dn-preview-wrapper { background: none; padding: 0; overflow: visible; }
-            .dn-container { box-shadow: none; width: 100%; padding: 0; }
+            body { background: white !important; margin: 0; padding: 0; }
+            .dn-preview-wrapper { width: 100%; padding: 0; background: white; overflow: visible; }
+            
+            /* 強制列印色彩與排版 */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .dn-container { 
+                width: 210mm !important; 
+                height: 296mm !important; /* 確保不會多出一張空白頁 */
+                padding: 12mm 15mm !important; /* A4 紙張的完美邊距 */
+                margin: 0 !important; 
+                box-shadow: none !important; 
+                border: none !important;
+                page-break-inside: avoid;
+            }
         }
     </style>
 </head>
@@ -187,9 +199,8 @@
         </div>
         
         <div class="btn-group">
-            <button class="btn btn-gen" onclick="generateDN()">⬇️ 生成送貨單預覽</button>
-            <button class="btn btn-print" onclick="printDN()">🖨️ 電腦列印 (Ctrl+P)</button>
-            <button class="btn btn-pdf" onclick="downloadMobilePDF()">📱 手機一鍵儲存 PDF (完美單頁)</button>
+            <button class="btn btn-gen" onclick="generateDN()">⬇️ 1. 生成送貨單預覽</button>
+            <button class="btn btn-print" onclick="printDN()">🖨️ 2. 列印成 PDF (與圖二排版完全一致)</button>
         </div>
     </div>
 
@@ -200,12 +211,8 @@
         <div class="dn-container" id="printableArea">
             
             <div class="header-section">
-                <!-- 注意：請確保 logo.png 與此 HTML 檔案在同一個資料夾 -->
-                <img src="logo.png" alt="Logo" class="header-logo" onerror="this.style.display='none'">
-                <div class="header-text-block">
-                    <div class="company-zh">晉昌鋼架工程有限公司</div>
-                    <div class="company-en">Advance Prosperity Scaffold Engineering Limited</div>
-                </div>
+                <!-- 只保留 Logo 圖片，因為圖片本身已經包含了公司名稱文字 -->
+                <img src="logo.png" alt="晉昌鋼架工程有限公司" class="header-logo" onerror="this.style.display='none'">
             </div>
 
             <div class="doc-title-wrapper">
@@ -234,7 +241,6 @@
 
             <!-- 一個 Table 容納所有數據，保證寬度對齊 -->
             <table class="dn-main-table">
-                <!-- 強制鎖死每一直欄的寬度比例 -->
                 <colgroup>
                     <col style="width: 5%;">  <!-- 序 -->
                     <col style="width: 15%;"> <!-- APS 編號 -->
@@ -529,7 +535,7 @@
                 totalWeight += weightTotal;
             }
 
-            // 虛線分隔 (如果有散裝才顯示)
+            // 虛線分隔
             if (hasScatteredItems) {
                 document.getElementById('out-separator').innerHTML = `<tr><td colspan="7"></td></tr>`;
             } else {
@@ -579,38 +585,16 @@
             document.getElementById('out-racks').innerHTML = rackHtml;
         }
 
-        // 電腦端列印
+        // 🖨️ 完美列印功能：保證渲染完畢後彈出，並強制套用 A4 CSS
         function printDN() {
+            // 先生成數據
             generateDN();
             saveDNState();
-            window.print();
-        }
-
-        // 📱 手機生成 PDF 的魔法修正 (鎖定 A4 寬度與比例)
-        function downloadMobilePDF() {
-            generateDN();
-            saveDNState();
-
-            const element = document.getElementById('printableArea');
-            const dnNo = document.getElementById('i-dnno').value || 'Delivery_Note';
-
-            // 設定產生參數：強制畫布使用 794px 寬度，徹底忽略手機螢幕大小
-            const opt = {
-                margin:       0,
-                filename:     `${dnNo}.pdf`,
-                image:        { type: 'jpeg', quality: 1 },
-                html2canvas:  { 
-                    scale: 2, 
-                    useCORS: true, 
-                    width: 794,           // 強制截圖區塊寬度
-                    windowWidth: 794      // 欺騙瀏覽器，以為當前螢幕是電腦寬度
-                }, 
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-
-            html2pdf().set(opt).from(element).save().then(() => {
-                alert('✅ PDF 已成功生成並自動排版為一頁！');
-            });
+            
+            // 延遲 300 毫秒，確保瀏覽器把數據都填到畫面上了，才彈出列印視窗
+            setTimeout(function() {
+                window.print();
+            }, 300);
         }
 
         // 首次載入執行
