@@ -27,7 +27,7 @@
         .btn-print { background: #007bff; }
         .btn-print:hover { background: #0056b3; }
         
-        /* 預覽外框 (深色背景襯托白紙) */
+        /* 預覽外框 */
         .dn-preview-wrapper {
             width: 100%;
             overflow-x: auto;
@@ -38,8 +38,8 @@
 
         /* 🌟 送貨單 A4 實體樣式 (預覽) 🌟 */
         .dn-container { 
-            width: 794px;      /* A4 寬度 */
-            min-height: 1122px; /* A4 高度 */
+            width: 794px;      
+            min-height: 1122px; 
             margin: 0 auto; 
             background: white; 
             padding: 40px 50px; 
@@ -50,11 +50,12 @@
         }
         
         /* 表頭 Logo 與標題區塊 */
-        .header-section { display: flex; justify-content: center; margin-bottom: 15px; }
+        /* 微調：縮短 Logo 與標題的距離 */
+        .header-section { display: flex; justify-content: center; margin-bottom: 5px; }
         .header-logo { height: 75px; object-fit: contain; }
         
         .doc-title-wrapper { text-align: center; margin-bottom: 15px; }
-        .doc-title-wrapper .zh { font-size: 22px; font-weight: 900; letter-spacing: 8px; }
+        .doc-title-wrapper .zh { font-size: 22px; font-weight: 900; letter-spacing: 8px; margin-bottom: 2px; }
         .doc-title-wrapper .en { font-size: 16px; font-weight: normal; letter-spacing: 1px; }
 
         /* 元數據表格 */
@@ -74,7 +75,7 @@
         
         /* 內容數據列 */
         .dn-main-table tbody.data-rows td { color: #00008B; }
-        .dn-main-table td.desc-col { text-align: left; }
+        .dn-main-table td.desc-col { text-align: left; padding-left: 5px; } /* 確保左側與標題對齊 */
         
         /* 分隔線 */
         .dn-main-table tbody.sep-row td { border-top: 1px dashed #999; padding: 0; height: 10px; }
@@ -83,8 +84,9 @@
         .dn-main-table tbody.total-row td { border-top: 1px solid black; border-bottom: 2px solid black; font-weight: bold; padding: 8px 0; color: #000; }
         
         /* 打包架專用列 */
-        .dn-main-table tbody.rack-rows td { color: #00008B; padding: 6px 2px; font-weight: normal; vertical-align: top;}
-        .dn-main-table tbody.rack-rows td.desc-col { font-weight: bold; line-height: 1.4; }
+        .dn-main-table tbody.rack-rows td { color: #00008B; padding: 4px 2px; font-weight: normal; vertical-align: top;}
+        /* 微調：打包架描述文字縮減行距、加粗、向左對齊 */
+        .dn-main-table tbody.rack-rows td.desc-col { font-weight: bold; line-height: 1.2; text-align: left; padding-left: 5px; }
 
         /* 藍色提示字 */
         .blue-note { text-align: center; color: #00008B; font-weight: bold; font-size: 11px; margin-top: 8px; margin-bottom: 15px; }
@@ -97,16 +99,15 @@
         
         .footer-address { font-size: 10px; text-align: center; font-weight: bold; }
 
-        /* 🖨️ 完美列印模式：直接將預覽畫面 100% 塞入 A4 🖨️ */
+        /* 🖨️ 完美列印模式 */
         @page {
             size: A4 portrait;
-            margin: 0; /* 取消瀏覽器預設頁界，由 HTML 的 padding 負責 */
+            margin: 0; 
         }
         @media print {
             .no-print { display: none !important; }
             body { background: white !important; margin: 0; padding: 0; }
             
-            /* 重置外框，移除深色背景與捲動軸 */
             .dn-preview-wrapper { 
                 width: 100% !important; 
                 padding: 0 !important; 
@@ -114,18 +115,16 @@
                 overflow: visible !important; 
             }
             
-            /* 讓瀏覽器自動將這個區塊縮放至 A4 寬度 */
             .dn-container { 
                 width: 100% !important; 
                 height: auto !important;
                 min-height: 0 !important;
-                padding: 12mm 15mm !important; /* 列印時的留白 */
+                padding: 12mm 15mm !important; 
                 margin: 0 !important; 
                 box-shadow: none !important; 
                 border: none !important;
             }
 
-            /* 強制列印出所有文字與背景顏色 */
             * {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
@@ -135,7 +134,7 @@
 </head>
 <body>
 
-    <!-- 控制面板 (這區塊在列印時會被隱藏) -->
+    <!-- 控制面板 -->
     <div class="control-panel no-print">
         <h3>⚙️ 送貨單生成器設定</h3>
         <div class="form-row">
@@ -207,12 +206,12 @@
         </div>
         
         <div class="btn-group">
-            <button class="btn btn-gen" onclick="generateDN()">⬇️ 生成送貨單預覽</button>
-            <button class="btn btn-print" onclick="printDN()">🖨️ 列印 / 儲存為 PDF</button>
+            <button class="btn btn-gen" onclick="generateDN()">⬇️ 1. 生成送貨單預覽</button>
+            <button class="btn btn-print" onclick="printDN()">🖨️ 2. 列印成 PDF (與圖二排版完全一致)</button>
         </div>
     </div>
 
-    <!-- 🌟 預覽外框 (已經移除了該死的 no-print 標籤！) 🌟 -->
+    <!-- 預覽外框 -->
     <div class="dn-preview-wrapper" id="previewWrapper">
         
         <div class="dn-container" id="printableArea">
@@ -262,7 +261,7 @@
                     <tr>
                         <th>序</th>
                         <th>APS 編號</th>
-                        <th style="text-align: left;">Description 规格描述</th>
+                        <th style="text-align: left; padding-left: 5px;">Description 规格描述</th>
                         <th>件重</th>
                         <th>數量<br>Quantity</th>
                         <th>重量(KG)</th>
@@ -376,12 +375,13 @@
             "APS300AB": { desc: "九比架 Angle Bracket 300", weight: 4.9 }
         };
 
+        // 🌟 移除了 "打包架 A/B/C/D/E:" 文字 🌟
         const rackConfigs = [
-            { code: "APS1290RA", desc: "打包架 A : 直桿 1000*4 - 橫桿 1200*4 900*4 -<br>腳套 200 *4" },
-            { code: "APS9090RB", desc: "打包架 B : 直桿 1000*4 - 橫桿 900*8 - 腳套<br>200 *4" },
-            { code: "APS9060RC", desc: "打包架 C : 直桿 1000*4 - 橫桿 900*4 600*4 -<br>腳套 200 *4" },
-            { code: "APS9070RD", desc: "打包架 D : 直桿 1000*4 - 橫桿 900*4 700*4 -<br>腳套 200 *4" },
-            { code: "APS6060RE", desc: "打包架 E : 直桿 1000*4 - 橫桿 600*8 - 腳套<br>200 *4" }
+            { code: "APS1290RA", desc: "直桿 1000*4 - 橫桿 1200*4 900*4 -<br>腳套 200 *4" },
+            { code: "APS9090RB", desc: "直桿 1000*4 - 橫桿 900*8 - 腳套<br>200 *4" },
+            { code: "APS9060RC", desc: "直桿 1000*4 - 橫桿 900*4 600*4 -<br>腳套 200 *4" },
+            { code: "APS9070RD", desc: "直桿 1000*4 - 橫桿 900*4 700*4 -<br>腳套 200 *4" },
+            { code: "APS6060RE", desc: "直桿 1000*4 - 橫桿 600*8 - 腳套<br>200 *4" }
         ];
 
         const rackCompositions = {
