@@ -257,6 +257,7 @@
                 </tr>
             </table>
 
+            <!-- 一個 Table 容納所有數據，保證寬度對齊 -->
             <table class="dn-main-table">
                 <colgroup>
                     <col style="width: 5%;">  <!-- 序 -->
@@ -402,21 +403,25 @@
             "APS1000", "APS600L", "APS700L", "APS900L", "APS1200L", "APS200BC"
         ];
 
+        // 🌟 更新的預設地盤資訊，加入 shortName 用於完美存檔命名 🌟
         const presets = {
             "TC42-6": {
                 client: "智發建築工程有限公司", address: "香港九龍塘窩打老道155號",
                 site: "東涌42區-6座", contact: "東涌42區-6座 余生 9792 7157",
-                contract: "QUOT-CF-TC42", plate: "LV538", dnPrefix: "CF-TC42(B6)-SR-DN"
+                contract: "QUOT-CF-TC42", plate: "LV538", dnPrefix: "CF-TC42(B6)-SR-DN",
+                shortName: "東涌42區-6座"
             },
             "TC42-45": {
                 client: "智發建築工程有限公司", address: "香港九龍塘窩打老道155號",
                 site: "東涌42區[4-5座]", contact: "東涌42區 子健 5403 6365",
-                contract: "QUOT-CF-TC42", plate: "街車 WL9721", dnPrefix: "CF-TC42(B4-B5)-SR-DN"
+                contract: "QUOT-CF-TC42", plate: "街車 WL9721", dnPrefix: "CF-TC42(B4-B5)-SR-DN",
+                shortName: "東涌42區[4-5座]"
             },
             "CREC-CWB36": {
                 client: "中鐵一局集團有限公司", address: "FLAT/RM A3-A5 20/F, TML TOWER, 3 HOI SHING ROAD, TSUEN WAN, NT",
                 site: "36 Clear Water Bay Road, Ngau Chi Wan, KN", contact: "傑 9207 1404 / 陽 6354 6598",
-                contract: "CREC-QT01", plate: "LV538", dnPrefix: "CREC-CWB36-DN"
+                contract: "CREC-QT01", plate: "LV538", dnPrefix: "CREC-CWB36-DN",
+                shortName: "清水灣36號"
             }
         };
 
@@ -476,13 +481,19 @@
             const fullDnNo = document.getElementById('i-dnprefix').value + document.getElementById('i-carnum').value;
             document.getElementById('out-dnno').innerText = fullDnNo;
             
-            // 🌟 最終檔名組合邏輯 🌟
+            // 🌟 最終檔名組合邏輯 (支援清水灣等長地址的短名替換) 🌟
             const clientName = document.getElementById('i-client').value.trim();
-            const clientPrefix = clientName.substring(0, 2); // 擷取公司名前兩個字
-            const siteName = document.getElementById('i-site').value.trim();
+            const clientPrefix = clientName.substring(0, 2); 
+            
+            let siteNameForFile = document.getElementById('i-site').value.trim();
+            const presetVal = document.getElementById('sitePreset').value;
+            if (presetVal && presets[presetVal]) {
+                siteNameForFile = presets[presetVal].shortName;
+            }
+
             const carNum = document.getElementById('i-carnum').value.trim();
             
-            // 將 YYYY-MM-DD 轉為 DDMMM 格式 (例如 24JUL)
+            // 將日期轉為 24JUL 格式
             const dateVal = document.getElementById('i-date').value;
             let formattedDate = dateVal;
             if (dateVal) {
@@ -491,8 +502,8 @@
                 formattedDate = String(d.getDate()).padStart(2, '0') + months[d.getMonth()];
             }
             
-            // 更新 document.title，作為存 PDF 時的預設檔案名稱
-            document.title = `【租賃】${clientPrefix}-${siteName} 送貨單 第${carNum}車 ${formattedDate} -unsigned-`;
+            // 👉 生成完美檔名
+            document.title = `【租賃】${clientPrefix}-${siteNameForFile} 送貨單 第${carNum}車 ${formattedDate} -unsigned-`;
             
             let plateVal = document.getElementById('i-plate').value;
             if (plateVal === 'custom') plateVal = document.getElementById('customPlate').value;
