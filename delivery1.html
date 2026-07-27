@@ -159,7 +159,6 @@
         <div class="form-row">
             <div class="form-group"><label>客戶名稱 Client:</label><input type="text" id="i-client" value="智發建築工程有限公司"></div>
             
-            <!-- 🌟 拆分的收貨單單號輸入區 (前綴 + 車數) 🌟 -->
             <div class="form-group">
                 <label>收貨單單號 (前綴 + 車數):</label>
                 <div style="display: flex; gap: 5px;">
@@ -437,7 +436,6 @@
             }
         }
 
-        // 🌟 讀取地盤資料並自動 +1 車數邏輯 🌟
         function applyPreset() {
             const val = document.getElementById('sitePreset').value;
             if(val && presets[val]) {
@@ -449,7 +447,6 @@
                 document.getElementById('i-plate').value = presets[val].plate;
                 handlePlateChange();
                 
-                // 處理前綴與車數
                 document.getElementById('i-dnprefix').value = presets[val].dnPrefix;
                 const lastNum = localStorage.getItem('dn_num_' + val);
                 const hintEl = document.getElementById('carNumHint');
@@ -465,7 +462,6 @@
             }
         }
 
-        // 🌟 儲存當前車數記憶 🌟
         function saveDNState() {
             const val = document.getElementById('sitePreset').value;
             if(val) {
@@ -482,13 +478,22 @@
             document.getElementById('out-contract').innerText = document.getElementById('i-contract').value;
             document.getElementById('out-date').innerText = document.getElementById('i-date').value;
             
-            // 🌟 組合前綴 + 車數，並寫入預覽畫面 🌟
             const fullDnNo = document.getElementById('i-dnprefix').value + document.getElementById('i-carnum').value;
             document.getElementById('out-dnno').innerText = fullDnNo;
             
+            // 🌟 組合完美 PDF 檔案名稱 🌟
+            // 格式：【租賃】智發-東涌42區[4-5座] 送貨單 第35車 27JUL -unsigned-
+            const clientStr = document.getElementById('i-client').value.trim().substring(0, 2);
             const siteName = document.getElementById('i-site').value.trim();
-            const dnDate = document.getElementById('i-date').value.trim();
-            document.title = `${siteName} ${dnDate}`;
+            const carNum = document.getElementById('i-carnum').value.trim();
+            
+            const dateObj = new Date(document.getElementById('i-date').value);
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+            const monthStr = months[dateObj.getMonth()];
+            const dateFormatted = `${day}${monthStr}`;
+
+            document.title = `【租賃】${clientStr}-${siteName} 送貨單 第${carNum}車 ${dateFormatted} -unsigned-`;
             
             let plateVal = document.getElementById('i-plate').value;
             if (plateVal === 'custom') plateVal = document.getElementById('customPlate').value;
@@ -547,7 +552,6 @@
             let totalWeight = 0;
             let index = 1;
 
-            // 1. 散裝材料
             for(let code in itemMap) {
                 const qty = itemMap[code];
                 const info = db[code];
@@ -566,14 +570,12 @@
                 totalWeight += weightTotal;
             }
 
-            // 虛線分隔
             if (hasScatteredItems) {
                 document.getElementById('out-separator').innerHTML = `<tr><td colspan="7"></td></tr>`;
             } else {
                 document.getElementById('out-separator').innerHTML = '';
             }
 
-            // 2. 底座固定組件
             for(let code of fixedBaseComponents) {
                 const qty = baseCounts[code];
                 const info = db[code];
@@ -597,7 +599,6 @@
             document.getElementById('out-total-qty').innerText = totalQty;
             document.getElementById('out-total-weight').innerText = totalWeight.toFixed(2);
 
-            // 3. 打包架專用行
             let rackHtml = '';
             rackConfigs.forEach((rack) => {
                 const q = rackInputs[rack.code];
@@ -620,7 +621,6 @@
             generateDN();
             saveDNState();
             
-            // 延遲更新車數提示，讓使用者知道已經存檔
             const val = document.getElementById('sitePreset').value;
             if(val) {
                 const hintEl = document.getElementById('carNumHint');
