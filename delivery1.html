@@ -8,7 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
-        /* 網頁版控制面板樣式 */
+        /* 網頁版控制面板樣式 (列印時隱藏) */
         body { font-family: "Microsoft JhengHei", Arial, sans-serif; background: #e9ecef; margin: 0; padding: 20px; }
         .control-panel { max-width: 900px; margin: 0 auto 20px; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .control-panel h3 { margin-top: 0; color: #333; border-bottom: 2px solid #25D366; padding-bottom: 10px; }
@@ -17,13 +17,11 @@
         label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #555; }
         input[type="text"], input[type="date"], select, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
         
-        /* 打包架輸入區 */
         .rack-input-section { background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #d1d5db; }
-        .rack-input-section .rack-title { color: #d97706; font-size: 15px; margin-bottom: 10px; border-bottom: none; padding-bottom: 0; margin-top:0; }
+        .rack-input-section .rack-title { color: #d97706; font-size: 15px; margin-bottom: 10px; border-bottom: none; padding-bottom: 0; margin-top: 0; }
         .rack-input-section .form-group label { font-size: 11px; color: #4b5563; }
         .rack-input-section input[type="number"] { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; text-align: center; font-weight: bold; font-size: 16px; color: #00008B; }
 
-        /* 按鈕群組 */
         .btn-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
         .btn { flex: 1; min-width: 200px; padding: 12px; font-size: 15px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; color: white; transition: 0.2s; }
         .btn-gen { background: #25D366; }
@@ -33,78 +31,85 @@
         .btn-pdf { background: #8e44ad; } 
         .btn-pdf:hover { background: #732d91; }
         
-        /* 預覽外框 */
+        /* 預覽外框，讓手機可以左右滑動看完整 A4 */
         .dn-preview-wrapper {
             width: 100%;
             overflow-x: auto;
-            background: #d1d5db;
+            background: #525659; /* 深色背景襯托白紙 */
             padding: 20px 0;
             border-radius: 8px;
         }
 
-        /* 送貨單 A4 實體樣式 (精準匹配原始檔) */
+        /* 🌟 送貨單 A4 實體樣式 (精準像素鎖定) 🌟 */
         .dn-container { 
-            width: 210mm;
-            min-height: 297mm;
+            width: 794px;      /* 強制設定為 A4 寬度像素 (210mm @ 96dpi) */
+            min-height: 1122px; /* 強制設定為 A4 高度像素 (297mm @ 96dpi) */
             margin: 0 auto; 
             background: white; 
-            padding: 10mm 12mm; 
-            box-shadow: 0 0 10px rgba(0,0,0,0.3); 
+            padding: 40px 50px; /* 留出美觀的白邊 */
+            box-shadow: 0 0 10px rgba(0,0,0,0.5); 
             box-sizing: border-box; 
             color: #000; 
             -webkit-text-size-adjust: 100%;
         }
         
-        .header-title { text-align: center; margin-bottom: 12px; }
-        .header-title .company-zh { font-size: 22px; font-weight: bold; letter-spacing: 2px; line-height: 1.2; }
-        .header-title .company-en { font-size: 13px; font-weight: bold; margin-bottom: 6px; }
-        .header-title .doc-title-zh { font-size: 20px; font-weight: 900; letter-spacing: 6px; margin-top: 4px; }
-        .header-title .doc-title-en { font-size: 13px; font-weight: normal; letter-spacing: 1px; }
+        /* 表頭 Logo 與標題區塊 */
+        .header-section { display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+        .header-logo { height: 60px; margin-right: 15px; }
+        .header-text-block { text-align: left; }
+        .header-text-block .company-zh { font-size: 28px; font-weight: 900; letter-spacing: 2px; margin-bottom: 2px; }
+        .header-text-block .company-en { font-size: 13px; font-weight: bold; font-family: Arial, sans-serif; }
+        
+        .doc-title-wrapper { text-align: center; margin-bottom: 15px; }
+        .doc-title-wrapper .zh { font-size: 22px; font-weight: 900; letter-spacing: 8px; }
+        .doc-title-wrapper .en { font-size: 16px; font-weight: normal; letter-spacing: 1px; }
 
         /* 元數據表格 */
-        .meta-table { width: 100%; font-size: 12px; margin-bottom: 12px; border-collapse: collapse; }
-        .meta-table td { padding: 3px 0; vertical-align: top; } 
-        .meta-label { font-weight: bold; width: 15%; white-space: nowrap; }
-        .meta-val { color: #00008B; font-weight: bold; width: 35%; padding-right: 10px; }
-        .meta-label-right { font-weight: bold; width: 15%; text-align: left; padding-left: 10px; white-space: nowrap; }
-        .meta-val-right { color: #00008B; font-weight: bold; width: 35%; }
+        .meta-table { width: 100%; font-size: 12px; margin-bottom: 15px; border-collapse: collapse; }
+        .meta-table td { padding: 4px 0; vertical-align: middle; } 
+        .meta-label { font-weight: bold; width: 14%; white-space: nowrap; }
+        .meta-val { color: #00008B; width: 36%; padding-right: 10px; }
+        .meta-label-right { font-weight: bold; width: 14%; text-align: left; padding-left: 10px; white-space: nowrap; }
+        .meta-val-right { color: #00008B; width: 36%; text-align: right; }
         
-        /* 統一主表格 (散裝 + 底座組件 + 總數 + 打包架) */
-        .dn-main-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 5px; table-layout: fixed; }
-        .dn-main-table th, .dn-main-table td { padding: 4px 2px; text-align: center; word-wrap: break-word; } 
+        /* 🌟 統一主表格 (散裝 + 底座 + 總數 + 打包架) 🌟 */
+        .dn-main-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+        .dn-main-table th, .dn-main-table td { padding: 6px 2px; text-align: center; word-wrap: break-word; } 
+        
+        /* 標題列 */
         .dn-main-table th { border-top: 2px solid black; border-bottom: 1px solid black; font-weight: bold; }
-        .dn-main-table tbody td { color: #00008B; font-weight: bold; }
+        
+        /* 內容數據列 */
+        .dn-main-table tbody.data-rows td { color: #00008B; }
         .dn-main-table td.desc-col { text-align: left; }
         
-        /* 總數計價列樣式 */
-        .dn-main-table tfoot td { border-top: 1px solid black; border-bottom: 1px solid black; font-weight: bold; padding: 6px 0; color: #000; }
-        
         /* 分隔線 */
-        .separator-row td {
-            border-top: 1px dashed #888 !important; 
-            height: 8px; 
-            padding: 0 !important;
-        }
+        .dn-main-table tbody.sep-row td { border-top: 1px dashed #999; padding: 0; height: 10px; }
+        
+        /* 總數計價列 */
+        .dn-main-table tbody.total-row td { border-top: 1px solid black; border-bottom: 2px solid black; font-weight: bold; padding: 8px 0; color: #000; }
+        
+        /* 打包架專用列 */
+        .dn-main-table tbody.rack-rows td { color: #00008B; padding: 6px 2px; font-weight: normal; vertical-align: top;}
+        .dn-main-table tbody.rack-rows td.desc-col { font-weight: bold; line-height: 1.4; }
 
-        /* 打包架專用列邊框樣式 */
-        .rack-row td { color: #00008B; font-weight: bold; padding: 3px 2px; }
-        .rack-last-row td { border-bottom: 2px solid black; }
+        /* 藍色提示字 */
+        .blue-note { text-align: center; color: #00008B; font-weight: bold; font-size: 11px; margin-top: 8px; margin-bottom: 15px; }
 
         /* 底部條款與簽名區 */
-        .footer-terms { font-size: 10.5px; margin-top: 8px; line-height: 1.4; } 
-        .footer-terms .blue-note { color: #00008B; text-align: center; font-weight: bold; margin-bottom: 12px; }
-        .footer-terms .black-note { font-weight: bold; text-align: justify; }
+        .black-terms { font-size: 10.5px; font-weight: bold; text-align: justify; line-height: 1.5; margin-bottom: 30px; }
         
-        .signatures { display: flex; justify-content: space-between; margin-top: 35px; font-size: 12px; font-weight: bold; }
-        .sig-box { width: 45%; text-align: center; border-top: 1px solid black; padding-top: 5px; }
-        .footer-address { margin-top: 20px; font-size: 10px; text-align: center; font-weight: bold; }
+        .signatures { display: flex; justify-content: space-between; font-size: 13px; font-weight: normal; margin-bottom: 15px;}
+        .sig-box { width: 40%; text-align: center; border-top: 1px solid black; padding-top: 8px; }
+        
+        .footer-address { font-size: 10px; text-align: center; font-weight: bold; }
 
         /* 列印模式 */
         @media print {
             .no-print { display: none !important; }
             body { background: white; margin: 0; padding: 0; }
             .dn-preview-wrapper { background: none; padding: 0; overflow: visible; }
-            .dn-container { box-shadow: none; width: 100%; padding: 5mm 8mm; }
+            .dn-container { box-shadow: none; width: 100%; padding: 0; }
         }
     </style>
 </head>
@@ -162,26 +167,23 @@
             <div class="form-group"><label>合約編號:</label><input type="text" id="i-contract" value="QUOT-CF-TC42"></div>
         </div>
         <div class="form-row">
-            <div class="form-group"><label>聯絡人:</label><input type="text" id="i-contact" value="東涌42區-6座 余生 97927157"></div>
+            <div class="form-group"><label>聯絡人:</label><input type="text" id="i-contact" value="東涌42區-6座 余生 9792 7157"></div>
         </div>
 
         <div class="rack-input-section">
             <h4 class="rack-title">📦 輸入送貨架數量 (系統會自動將組件數量填入表格)</h4>
             <div class="form-row">
-                <div class="form-group"><label>架A (APS1290RA)</label><input type="number" id="i-rack-a" min="0" value="2" placeholder="0"></div>
+                <div class="form-group"><label>架A (APS1290RA)</label><input type="number" id="i-rack-a" min="0" placeholder="0"></div>
                 <div class="form-group"><label>架B (APS9090RB)</label><input type="number" id="i-rack-b" min="0" placeholder="0"></div>
                 <div class="form-group"><label>架C (APS9060RC)</label><input type="number" id="i-rack-c" min="0" placeholder="0"></div>
-                <div class="form-group"><label>架D (APS9070RD)</label><input type="number" id="i-rack-d" min="0" value="2" placeholder="0"></div>
+                <div class="form-group"><label>架D (APS9070RD)</label><input type="number" id="i-rack-d" min="0" placeholder="0"></div>
                 <div class="form-group"><label>架E (APS6060RE)</label><input type="number" id="i-rack-e" min="0" placeholder="0"></div>
             </div>
         </div>
 
         <div class="form-group">
             <label>📝 貼上 WhatsApp散裝材料清單:</label>
-            <textarea id="rawInput" rows="4" placeholder="例如：APS1000S: 246支; APS2000S: 322支...">APS1000S: 246支
-APS2000S: 322支
-APS0615D: 216支
-APS0915D: 207支</textarea>
+            <textarea id="rawInput" rows="4" placeholder="例如：APS2000S: 322支..."></textarea>
         </div>
         
         <div class="btn-group">
@@ -193,72 +195,98 @@ APS0915D: 207支</textarea>
 
     <!-- 預覽外框 -->
     <div class="dn-preview-wrapper no-print" id="previewWrapper">
-        <!-- 正式送貨單版面 -->
+        
+        <!-- 🌟 正式送貨單版面 🌟 -->
         <div class="dn-container" id="printableArea">
             
-            <div class="header-title">
-                <div class="company-zh">晉昌鋼架工程有限公司</div>
-                <div class="company-en">Advance Prosperity Scaffold Engineering Limited</div>
-                <div class="doc-title-zh">送貨單</div>
-                <div class="doc-title-en">Delivery Note</div>
+            <div class="header-section">
+                <!-- 注意：請確保 logo.png 與此 HTML 檔案在同一個資料夾 -->
+                <img src="logo.png" alt="Logo" class="header-logo" onerror="this.style.display='none'">
+                <div class="header-text-block">
+                    <div class="company-zh">晉昌鋼架工程有限公司</div>
+                    <div class="company-en">Advance Prosperity Scaffold Engineering Limited</div>
+                </div>
+            </div>
+
+            <div class="doc-title-wrapper">
+                <div class="zh">送貨單</div>
+                <div class="en">Delivery Note</div>
             </div>
 
             <table class="meta-table">
                 <tr>
-                    <td class="meta-label">客戶名稱 Client:</td><td class="meta-val" id="out-client">智發建築工程有限公司</td>
-                    <td class="meta-label-right">收貨單單號:</td><td class="meta-val-right" id="out-dnno">CF-TC42(B6)-SR-DN35</td>
+                    <td class="meta-label">客戶名稱 Client :</td><td class="meta-val" id="out-client">智發建築工程有限公司</td>
+                    <td class="meta-label-right">收貨單單號 :</td><td class="meta-val-right" id="out-dnno">CF-TC42(B6)-SR-DN35</td>
                 </tr>
                 <tr>
-                    <td class="meta-label">地址Address:</td><td class="meta-val" id="out-address">香港九龍塘窩打老道155號</td>
-                    <td class="meta-label-right">運輸車牌:</td><td class="meta-val-right" id="out-plate">LV538</td>
+                    <td class="meta-label">地址 Address :</td><td class="meta-val" id="out-address">香港九龍塘窩打老道155號</td>
+                    <td class="meta-label-right">運輸車牌 :</td><td class="meta-val-right" id="out-plate">LV538</td>
                 </tr>
                 <tr>
-                    <td class="meta-label">送貨地盤地址:</td><td class="meta-val" id="out-site">東涌42區-6座</td>
-                    <td class="meta-label-right">日期 Date:</td><td class="meta-val-right" id="out-date">2026-07-24</td>
+                    <td class="meta-label">送貨地盤地址 :</td><td class="meta-val" id="out-site">東涌42區-6座</td>
+                    <td class="meta-label-right">日期 Date :</td><td class="meta-val-right" id="out-date">2026-07-27</td>
                 </tr>
                 <tr>
-                    <td class="meta-label">聯絡人:</td><td class="meta-val" id="out-contact">東涌42區-6座 余生 97927157</td>
-                    <td class="meta-label-right">合約編號:</td><td class="meta-val-right" id="out-contract">QUOT-CF-TC42</td>
+                    <td class="meta-label">聯絡人 :</td><td class="meta-val" id="out-contact">東涌42區-6座 余生 9792 7157</td>
+                    <td class="meta-label-right">合約編號 :</td><td class="meta-val-right" id="out-contract">QUOT-CF-TC42</td>
                 </tr>
             </table>
 
-            <!-- 統一主表格 -->
+            <!-- 一個 Table 容納所有數據，保證寬度對齊 -->
             <table class="dn-main-table">
+                <!-- 強制鎖死每一直欄的寬度比例 -->
                 <colgroup>
-                    <col style="width: 6%;">  <!-- 序 -->
-                    <col style="width: 17%;"> <!-- APS 編號 -->
-                    <col style="width: 37%;"> <!-- Description 規格描述 -->
+                    <col style="width: 5%;">  <!-- 序 -->
+                    <col style="width: 15%;"> <!-- APS 編號 -->
+                    <col style="width: 35%;"> <!-- Description -->
                     <col style="width: 10%;"> <!-- 件重 -->
-                    <col style="width: 10%;"> <!-- 數量 Quantity -->
-                    <col style="width: 10%;"> <!-- 重量(KG) -->
-                    <col style="width: 10%;"> <!-- 備注 Remark -->
+                    <col style="width: 11%;"> <!-- 數量 Quantity -->
+                    <col style="width: 12%;"> <!-- 重量(KG) -->
+                    <col style="width: 12%;"> <!-- 備注 -->
                 </colgroup>
+                
                 <thead>
                     <tr>
                         <th>序</th>
                         <th>APS 編號</th>
                         <th style="text-align: left;">Description 规格描述</th>
                         <th>件重</th>
-                        <th>數量 Quantity</th>
+                        <th>數量<br>Quantity</th>
                         <th>重量(KG)</th>
                         <th>備注 Remark</th>
                     </tr>
                 </thead>
-                <tbody id="out-items"></tbody>
-                <tfoot id="out-tfoot">
+                
+                <tbody class="data-rows" id="out-items-scattered">
+                    <!-- 散裝材料生成於此 -->
+                </tbody>
+                
+                <tbody class="sep-row" id="out-separator">
+                    <!-- 分隔虛線 -->
+                </tbody>
+                
+                <tbody class="data-rows" id="out-items-fixed">
+                    <!-- 固定組件生成於此 -->
+                </tbody>
+                
+                <tbody class="total-row">
                     <tr>
                         <td colspan="4" style="text-align: right; padding-right: 15px;">總數:</td>
                         <td id="out-total-qty">0</td>
                         <td id="out-total-weight">0.00</td>
                         <td></td>
                     </tr>
-                </tfoot>
-                <tbody id="out-racks"></tbody>
+                </tbody>
+                
+                <tbody class="rack-rows" id="out-racks">
+                    <!-- 打包架明細生成於此 -->
+                </tbody>
             </table>
 
-            <div class="footer-terms">
-                <div class="blue-note">*以上為送貨架組成的單件,其中送貨架租金和其費用將會以單件計算</div>
-                <div class="black-note">茲證明上列鋼架及配件品質,數量均已清楚檢驗合格及簽收確認 如回收貨品出現損毀/割斷/遺失,而未能於地盤即時點算發現,出租方有權自行點算後作出“實報實銷”</div>
+            <div class="blue-note">*以上為送貨架組成的單件，其中送貨架租金和其費用將會以單件計算</div>
+            
+            <div class="black-terms">
+                茲證明上列鋼架及配件品質, 數量均已清楚檢驗合格及簽收確認, 如回收貨品出現損毀/割斷/遺失, 而未能於地盤即時點算發現, 出租方有權自行點算後作出“實報實銷”
             </div>
 
             <div class="signatures">
@@ -267,7 +295,7 @@ APS0915D: 207支</textarea>
             </div>
             
             <div class="footer-address">
-                地址:新界葵芳興芳路223號新都會廣場二座23樓05室 郵件查詢:apseltdd@gmail.com 電話:蘇先生(Kenneth So) 66885076
+                地址: 新界葵芳興芳路223號新都會廣場二座23樓05室 郵件查詢 : apseltdd@gmail.com 電話: 蘇先生 (Kenneth So) 66885076
             </div>
         </div>
     </div>
@@ -280,12 +308,12 @@ APS0915D: 207支</textarea>
             "APS2000": { desc: "直桿 Standard 2000", weight: 9.2 },
             "APS2500": { desc: "直桿 Standard 2500", weight: 11.5 },
             "APS3000": { desc: "直桿 Standard 3000", weight: 13.8 },
-            "APS500S": { desc: "直桿 Standard 500 w/帶駁芯", weight: 3.0 },
-            "APS1000S": { desc: "直桿 Standard 1000 w/帶駁芯", weight: 5.3 },
-            "APS1500S": { desc: "直桿 Standard 1500 w/帶駁芯", weight: 7.6 },
-            "APS2000S": { desc: "直桿 Standard 2000 w/帶駁芯", weight: 9.9 },
-            "APS2500S": { desc: "直桿 Standard 2500 w/帶駁芯", weight: 12.2 },
-            "APS3000S": { desc: "直桿 Standard 3000 w/帶駁芯", weight: 14.5 },
+            "APS500S": { desc: "直桿 Standard 500 w/ 帶駁芯", weight: 3.0 },
+            "APS1000S": { desc: "直桿 Standard 1000 w/ 帶駁芯", weight: 5.3 },
+            "APS1500S": { desc: "直桿 Standard 1500 w/ 帶駁芯", weight: 7.6 },
+            "APS2000S": { desc: "直桿 Standard 2000 w/ 帶駁芯", weight: 9.9 },
+            "APS2500S": { desc: "直桿 Standard 2500 w/ 帶駁芯", weight: 12.2 },
+            "APS3000S": { desc: "直桿 Standard 3000 w/ 帶駁芯", weight: 14.5 },
             "APS300L": { desc: "橫桿 Ledger 300", weight: 1.6 },
             "APS600L": { desc: "橫桿 Ledger 600", weight: 2.8 },
             "APS700L": { desc: "橫桿 Ledger 700", weight: 2.9 },
@@ -336,11 +364,11 @@ APS0915D: 207支</textarea>
         };
 
         const rackConfigs = [
-            { code: "APS1290RA", desc: "打包架A:直桿1000*4-橫桿1200*4900*4-腳套200*4" },
-            { code: "APS9090RB", desc: "打包架B:直桿1000*4-橫桿900*8-腳套200*4" },
-            { code: "APS9060RC", desc: "打包架C:直桿1000*4-橫桿900*4600*4-腳套200*4" },
-            { code: "APS9070RD", desc: "打包架D:直桿1000*4-橫桿900*4700*4-腳套200*4" },
-            { code: "APS6060RE", desc: "打包架E:直桿1000*4-橫桿600*8-腳套200*4" }
+            { code: "APS1290RA", desc: "打包架 A : 直桿 1000*4 - 橫桿 1200*4 900*4 -<br>腳套 200 *4" },
+            { code: "APS9090RB", desc: "打包架 B : 直桿 1000*4 - 橫桿 900*8 - 腳套<br>200 *4" },
+            { code: "APS9060RC", desc: "打包架 C : 直桿 1000*4 - 橫桿 900*4 600*4 -<br>腳套 200 *4" },
+            { code: "APS9070RD", desc: "打包架 D : 直桿 1000*4 - 橫桿 900*4 700*4 -<br>腳套 200 *4" },
+            { code: "APS6060RE", desc: "打包架 E : 直桿 1000*4 - 橫桿 600*8 - 腳套<br>200 *4" }
         ];
 
         const rackCompositions = {
@@ -358,17 +386,17 @@ APS0915D: 207支</textarea>
         const presets = {
             "TC42-6": {
                 client: "智發建築工程有限公司", address: "香港九龍塘窩打老道155號",
-                site: "東涌42區-6座", contact: "東涌42區-6座 余生 97927157",
+                site: "東涌42區-6座", contact: "東涌42區-6座 余生 9792 7157",
                 contract: "QUOT-CF-TC42", plate: "LV538", dnPrefix: "CF-TC42(B6)-SR-DN"
             },
             "TC42-45": {
                 client: "智發建築工程有限公司", address: "香港九龍塘窩打老道155號",
-                site: "東涌42區[4-5座]", contact: "東涌42區 子健 54036365",
+                site: "東涌42區[4-5座]", contact: "東涌42區 子健 5403 6365",
                 contract: "QUOT-CF-TC42", plate: "街車 WL9721", dnPrefix: "CF-TC42(B4-B5)-SR-DN"
             },
             "CREC-CWB36": {
                 client: "中鐵一局集團有限公司", address: "FLAT/RM A3-A5 20/F, TML TOWER, 3 HOI SHING ROAD, TSUEN WAN, NT",
-                site: "36 Clear Water Bay Road, Ngau Chi Wan, KN", contact: "傑 92071404 / 陽 63546598",
+                site: "36 Clear Water Bay Road, Ngau Chi Wan, KN", contact: "傑 9207 1404 / 陽 6354 6598",
                 contract: "CREC-QT01", plate: "LV538", dnPrefix: "CREC-CWB36-DN"
             }
         };
@@ -400,7 +428,7 @@ APS0915D: 207支</textarea>
                 if (lastNum) {
                     document.getElementById('i-dnno').value = dnBase + (parseInt(lastNum, 10) + 1);
                 } else {
-                    document.getElementById('i-dnno').value = dnBase + "35"; 
+                    document.getElementById('i-dnno').value = dnBase + "1"; 
                 }
             }
         }
@@ -417,7 +445,6 @@ APS0915D: 207支</textarea>
         }
 
         function generateDN() {
-            // 表頭資料同步
             document.getElementById('out-client').innerText = document.getElementById('i-client').value;
             document.getElementById('out-address').innerText = document.getElementById('i-address').value;
             document.getElementById('out-site').innerText = document.getElementById('i-site').value;
@@ -441,7 +468,6 @@ APS0915D: 207支</textarea>
                 "APS6060RE": parseInt(document.getElementById('i-rack-e').value) || 0
             };
 
-            // 計算底座組件總數
             for (let rackCode in rackInputs) {
                 let rackQty = rackInputs[rackCode];
                 if (rackQty > 0) {
@@ -452,9 +478,9 @@ APS0915D: 207支</textarea>
                 }
             }
 
-            // 解析散裝材料
             const raw = document.getElementById('rawInput').value;
             const segments = raw.split(/;|；|。|\n/);
+            let hasScatteredItems = false; 
 
             segments.forEach(seg => {
                 const upperSeg = seg.toUpperCase();
@@ -473,11 +499,13 @@ APS0915D: 207支</textarea>
 
                     if(qty > 0 && db[code] && !Object.keys(rackCompositions).includes(code)) {
                         itemMap[code] = (itemMap[code] || 0) + qty;
+                        hasScatteredItems = true;
                     }
                 }
             });
 
-            let html = '';
+            let htmlScattered = '';
+            let htmlFixed = '';
             let totalQty = 0;
             let totalWeight = 0;
             let index = 1;
@@ -488,51 +516,57 @@ APS0915D: 207支</textarea>
                 const info = db[code];
                 const weightTotal = qty * info.weight;
                 
-                html += `<tr>
+                htmlScattered += `<tr>
                     <td>${index++}</td>
                     <td>${code}</td>
                     <td class="desc-col">${info.desc}</td>
-                    <td>${info.weight}</td>
+                    <td>${info.weight.toFixed(2)}</td>
                     <td>${qty}</td>
-                    <td>${weightTotal % 1 === 0 ? weightTotal : weightTotal.toFixed(2)}</td>
+                    <td>${weightTotal.toFixed(2)}</td>
                     <td></td>
                 </tr>`;
                 totalQty += qty;
                 totalWeight += weightTotal;
             }
 
-            // 2. 底座固定組件 (計算來自打包架的組件數量)
+            // 虛線分隔 (如果有散裝才顯示)
+            if (hasScatteredItems) {
+                document.getElementById('out-separator').innerHTML = `<tr><td colspan="7"></td></tr>`;
+            } else {
+                document.getElementById('out-separator').innerHTML = '';
+            }
+
+            // 2. 底座固定組件
             for(let code of fixedBaseComponents) {
                 const qty = baseCounts[code];
                 const info = db[code];
                 const weightTotal = qty * info.weight;
 
-                html += `<tr>
+                htmlFixed += `<tr>
                     <td>${index++}</td>
                     <td>${code}</td>
                     <td class="desc-col">${info.desc}</td>
-                    <td>${info.weight}</td>
+                    <td>${info.weight.toFixed(2)}</td>
                     <td style="color: ${qty > 0 ? '#00008B' : '#000'};">${qty}</td>
-                    <td>${weightTotal > 0 ? (weightTotal % 1 === 0 ? weightTotal : weightTotal.toFixed(2)) : '0'}</td>
+                    <td>${weightTotal > 0 ? weightTotal.toFixed(2) : '0'}</td>
                     <td></td>
                 </tr>`;
                 totalQty += qty;
                 totalWeight += weightTotal;
             }
 
-            document.getElementById('out-items').innerHTML = html;
+            document.getElementById('out-items-scattered').innerHTML = htmlScattered;
+            document.getElementById('out-items-fixed').innerHTML = htmlFixed;
             document.getElementById('out-total-qty').innerText = totalQty;
-            document.getElementById('out-total-weight').innerText = (totalWeight % 1 === 0 ? totalWeight : totalWeight.toFixed(2));
+            document.getElementById('out-total-weight').innerText = totalWeight.toFixed(2);
 
-            // 3. 打包架專用行 (直接在同一張表格底部追加)
+            // 3. 打包架專用行
             let rackHtml = '';
-            rackConfigs.forEach((rack, i) => {
+            rackConfigs.forEach((rack) => {
                 const q = rackInputs[rack.code];
                 const qStr = q > 0 ? q : '';
-                const isLast = (i === rackConfigs.length - 1);
-                const trClass = isLast ? 'rack-row rack-last-row' : 'rack-row';
                 
-                rackHtml += `<tr class="${trClass}">
+                rackHtml += `<tr>
                     <td></td>
                     <td>${rack.code}</td>
                     <td class="desc-col">${rack.desc}</td>
@@ -545,37 +579,41 @@ APS0915D: 207支</textarea>
             document.getElementById('out-racks').innerHTML = rackHtml;
         }
 
+        // 電腦端列印
         function printDN() {
             generateDN();
             saveDNState();
             window.print();
         }
 
+        // 📱 手機生成 PDF 的魔法修正 (鎖定 A4 寬度與比例)
         function downloadMobilePDF() {
             generateDN();
             saveDNState();
 
-            const wrapper = document.getElementById('previewWrapper');
             const element = document.getElementById('printableArea');
-            wrapper.style.overflowX = 'visible'; 
-            
             const dnNo = document.getElementById('i-dnno').value || 'Delivery_Note';
 
+            // 設定產生參數：強制畫布使用 794px 寬度，徹底忽略手機螢幕大小
             const opt = {
                 margin:       0,
                 filename:     `${dnNo}.pdf`,
                 image:        { type: 'jpeg', quality: 1 },
-                html2canvas:  { scale: 2, useCORS: true, windowWidth: 800 }, 
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true, 
+                    width: 794,           // 強制截圖區塊寬度
+                    windowWidth: 794      // 欺騙瀏覽器，以為當前螢幕是電腦寬度
+                }, 
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
             html2pdf().set(opt).from(element).save().then(() => {
-                wrapper.style.overflowX = 'auto'; 
-                alert('✅ PDF 已成功生成！請查看您的下載資料夾。');
+                alert('✅ PDF 已成功生成並自動排版為一頁！');
             });
         }
 
-        // 初始化第一次生成
+        // 首次載入執行
         generateDN();
     </script>
 </body>
