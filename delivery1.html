@@ -6,7 +6,7 @@
     <title>晉昌鋼架 - 送貨單生成器</title>
     
     <style>
-        /* 網頁版控制面板樣式 (列印時隱藏) */
+        /* 網頁版控制面板樣式 */
         body { font-family: "Microsoft JhengHei", Arial, sans-serif; background: #e9ecef; margin: 0; padding: 20px; }
         .control-panel { max-width: 900px; margin: 0 auto 20px; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .control-panel h3 { margin-top: 0; color: #333; border-bottom: 2px solid #25D366; padding-bottom: 10px; }
@@ -27,7 +27,7 @@
         .btn-print { background: #007bff; }
         .btn-print:hover { background: #0056b3; }
         
-        /* 預覽外框 */
+        /* 預覽外框 (深色背景襯托白紙) */
         .dn-preview-wrapper {
             width: 100%;
             overflow-x: auto;
@@ -49,7 +49,7 @@
             -webkit-text-size-adjust: 100%;
         }
         
-        /* 表頭 Logo 與標題區塊 (已移除多餘文字，只顯示完整 Logo 圖片) */
+        /* 表頭 Logo 與標題區塊 */
         .header-section { display: flex; justify-content: center; margin-bottom: 15px; }
         .header-logo { height: 75px; object-fit: contain; }
         
@@ -97,37 +97,45 @@
         
         .footer-address { font-size: 10px; text-align: center; font-weight: bold; }
 
-        /* 🖨️ 完美列印模式 (與網頁預覽 100% 一致，強制一頁 A4) 🖨️ */
+        /* 🖨️ 完美列印模式：直接將預覽畫面 100% 塞入 A4 🖨️ */
         @page {
             size: A4 portrait;
-            margin: 0mm; /* 由 dn-container 控制內距 */
+            margin: 0; /* 取消瀏覽器預設頁界，由 HTML 的 padding 負責 */
         }
         @media print {
             .no-print { display: none !important; }
             body { background: white !important; margin: 0; padding: 0; }
-            .dn-preview-wrapper { width: 100%; padding: 0; background: white; overflow: visible; }
             
-            /* 強制列印色彩與排版 */
-            * {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
+            /* 重置外框，移除深色背景與捲動軸 */
+            .dn-preview-wrapper { 
+                width: 100% !important; 
+                padding: 0 !important; 
+                background: transparent !important; 
+                overflow: visible !important; 
             }
-
+            
+            /* 讓瀏覽器自動將這個區塊縮放至 A4 寬度 */
             .dn-container { 
-                width: 210mm !important; 
-                height: 296mm !important; /* 確保不會多出一張空白頁 */
-                padding: 12mm 15mm !important; /* A4 紙張的完美邊距 */
+                width: 100% !important; 
+                height: auto !important;
+                min-height: 0 !important;
+                padding: 12mm 15mm !important; /* 列印時的留白 */
                 margin: 0 !important; 
                 box-shadow: none !important; 
                 border: none !important;
-                page-break-inside: avoid;
+            }
+
+            /* 強制列印出所有文字與背景顏色 */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
         }
     </style>
 </head>
 <body>
 
-    <!-- 控制面板 -->
+    <!-- 控制面板 (這區塊在列印時會被隱藏) -->
     <div class="control-panel no-print">
         <h3>⚙️ 送貨單生成器設定</h3>
         <div class="form-row">
@@ -199,19 +207,18 @@
         </div>
         
         <div class="btn-group">
-            <button class="btn btn-gen" onclick="generateDN()">⬇️ 1. 生成送貨單預覽</button>
-            <button class="btn btn-print" onclick="printDN()">🖨️ 2. 列印成 PDF (與圖二排版完全一致)</button>
+            <button class="btn btn-gen" onclick="generateDN()">⬇️ 生成送貨單預覽</button>
+            <button class="btn btn-print" onclick="printDN()">🖨️ 列印 / 儲存為 PDF</button>
         </div>
     </div>
 
-    <!-- 預覽外框 -->
-    <div class="dn-preview-wrapper no-print" id="previewWrapper">
+    <!-- 🌟 預覽外框 (已經移除了該死的 no-print 標籤！) 🌟 -->
+    <div class="dn-preview-wrapper" id="previewWrapper">
         
-        <!-- 🌟 正式送貨單版面 🌟 -->
         <div class="dn-container" id="printableArea">
             
             <div class="header-section">
-                <!-- 只保留 Logo 圖片，因為圖片本身已經包含了公司名稱文字 -->
+                <!-- 只保留 Logo 圖片 -->
                 <img src="logo.png" alt="晉昌鋼架工程有限公司" class="header-logo" onerror="this.style.display='none'">
             </div>
 
@@ -585,13 +592,12 @@
             document.getElementById('out-racks').innerHTML = rackHtml;
         }
 
-        // 🖨️ 完美列印功能：保證渲染完畢後彈出，並強制套用 A4 CSS
         function printDN() {
-            // 先生成數據
+            // 先保證數據更新
             generateDN();
             saveDNState();
             
-            // 延遲 300 毫秒，確保瀏覽器把數據都填到畫面上了，才彈出列印視窗
+            // 延遲 300 毫秒，等瀏覽器畫面更新後才呼叫列印，解決列印白紙問題
             setTimeout(function() {
                 window.print();
             }, 300);
