@@ -257,7 +257,6 @@
                 </tr>
             </table>
 
-            <!-- 一個 Table 容納所有數據，保證寬度對齊 -->
             <table class="dn-main-table">
                 <colgroup>
                     <col style="width: 5%;">  <!-- 序 -->
@@ -282,15 +281,12 @@
                 </thead>
                 
                 <tbody class="data-rows" id="out-items-scattered">
-                    <!-- 散裝材料生成於此 -->
                 </tbody>
                 
                 <tbody class="sep-row" id="out-separator">
-                    <!-- 分隔虛線 -->
                 </tbody>
                 
                 <tbody class="data-rows" id="out-items-fixed">
-                    <!-- 固定組件生成於此 -->
                 </tbody>
                 
                 <tbody class="total-row">
@@ -303,7 +299,6 @@
                 </tbody>
                 
                 <tbody class="rack-rows" id="out-racks">
-                    <!-- 打包架明細生成於此 -->
                 </tbody>
             </table>
 
@@ -481,19 +476,23 @@
             const fullDnNo = document.getElementById('i-dnprefix').value + document.getElementById('i-carnum').value;
             document.getElementById('out-dnno').innerText = fullDnNo;
             
-            // 🌟 組合完美 PDF 檔案名稱 🌟
-            // 格式：【租賃】智發-東涌42區[4-5座] 送貨單 第35車 27JUL -unsigned-
-            const clientStr = document.getElementById('i-client').value.trim().substring(0, 2);
+            // 🌟 最終檔名組合邏輯 🌟
+            const clientName = document.getElementById('i-client').value.trim();
+            const clientPrefix = clientName.substring(0, 2); // 擷取公司名前兩個字
             const siteName = document.getElementById('i-site').value.trim();
             const carNum = document.getElementById('i-carnum').value.trim();
             
-            const dateObj = new Date(document.getElementById('i-date').value);
-            const day = String(dateObj.getDate()).padStart(2, '0');
-            const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-            const monthStr = months[dateObj.getMonth()];
-            const dateFormatted = `${day}${monthStr}`;
-
-            document.title = `【租賃】${clientStr}-${siteName} 送貨單 第${carNum}車 ${dateFormatted} -unsigned-`;
+            // 將 YYYY-MM-DD 轉為 DDMMM 格式 (例如 24JUL)
+            const dateVal = document.getElementById('i-date').value;
+            let formattedDate = dateVal;
+            if (dateVal) {
+                const d = new Date(dateVal);
+                const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+                formattedDate = String(d.getDate()).padStart(2, '0') + months[d.getMonth()];
+            }
+            
+            // 更新 document.title，作為存 PDF 時的預設檔案名稱
+            document.title = `【租賃】${clientPrefix}-${siteName} 送貨單 第${carNum}車 ${formattedDate} -unsigned-`;
             
             let plateVal = document.getElementById('i-plate').value;
             if (plateVal === 'custom') plateVal = document.getElementById('customPlate').value;
@@ -552,6 +551,7 @@
             let totalWeight = 0;
             let index = 1;
 
+            // 1. 散裝材料
             for(let code in itemMap) {
                 const qty = itemMap[code];
                 const info = db[code];
@@ -570,12 +570,14 @@
                 totalWeight += weightTotal;
             }
 
+            // 虛線分隔
             if (hasScatteredItems) {
                 document.getElementById('out-separator').innerHTML = `<tr><td colspan="7"></td></tr>`;
             } else {
                 document.getElementById('out-separator').innerHTML = '';
             }
 
+            // 2. 底座固定組件
             for(let code of fixedBaseComponents) {
                 const qty = baseCounts[code];
                 const info = db[code];
@@ -599,6 +601,7 @@
             document.getElementById('out-total-qty').innerText = totalQty;
             document.getElementById('out-total-weight').innerText = totalWeight.toFixed(2);
 
+            // 3. 打包架專用行
             let rackHtml = '';
             rackConfigs.forEach((rack) => {
                 const q = rackInputs[rack.code];
