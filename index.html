@@ -108,11 +108,14 @@
             <label>地盤選擇 (自動綁定聯絡人與車次)</label>
             <select id="siteSelect">
                 <option value="中鐵-清水灣(租賃)">中鐵-清水灣(租賃)</option>
-                <option value="智發-東涌42區[4-5座] (租賃)">智發-東涌42區[4-5座] (租賃)</option>
+                <option value="智發-東涌42區[4座] (租賃)">智發-東涌42區[4座] (租賃)</option>
+                <option value="智發-東涌42區[5座] (租賃)">智發-東涌42區[5座] (租賃)</option>
                 <option value="智發-東涌42[6座] (租賃)">智發-東涌42[6座] (租賃)</option>
+                <option value="智發-粉嶺15區 (租賃)">智發-粉嶺15區 (租賃)</option>
                 <option value="景澤-東涌(租賃)">景澤-東涌(租賃)</option>
                 <option value="恆德-油塘(租賃)">恆德-油塘(租賃)</option>
                 <option value="熙信 - 謝斐道(租賃)">熙信 - 謝斐道(租賃)</option>
+                <option value="駿祺-東涌2615">駿祺-東涌2615</option>
                 <option value="custom">-- 其他地盤 (手動輸入) --</option>
             </select>
             <input type="text" id="customSite" style="display:none; margin-top:8px;" placeholder="請輸入新地盤名稱">
@@ -174,11 +177,14 @@
         // 📋 地盤與聯絡人資料庫
         const siteDatabase = {
             "中鐵-清水灣(租賃)": "傑 9207 1404 / 陽 6354 6598",
-            "智發-東涌42區[4-5座] (租賃)": "子建 5403 6365",
+            "智發-東涌42區[4座] (租賃)": "杰 9098 9901",
+            "智發-東涌42區[5座] (租賃)": "余建清 9792 7157",
             "智發-東涌42[6座] (租賃)": "余建清 9792 7157",
+            "智發-粉嶺15區 (租賃)": "峰 6150 2666",
             "景澤-東涌(租賃)": "景澤-阿進 9229 8114",
             "恆德-油塘(租賃)": "斌 5493 9627",
-            "熙信 - 謝斐道(租賃)": "鄭生 6449 9116"
+            "熙信 - 謝斐道(租賃)": "鄭生 6449 9116",
+            "駿祺-東涌2615": "駿祺"
         };
 
         // 🚚 車牌與司機資料庫
@@ -241,8 +247,7 @@
                     els.carNumHint.innerText = `上車為 ${lastNum}，已自動+1`;
                     els.carNumHint.style.display = 'block';
                 } else {
-                    // 如果沒有記憶，預設給 1
-                    // els.carNum.value = 1; (保留你當前輸入框的值，不強制清零，比較彈性)
+                    // 如果沒有記憶，預設給 1 (保留你當前輸入框的值，不強制清零，比較彈性)
                     els.carNumHint.style.display = 'none';
                 }
             }
